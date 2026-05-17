@@ -33,7 +33,7 @@ const loader = new GLTFLoader();
 loader.register((parser) => new VRMLoaderPlugin(parser));
 
 loader.load(
-    'models/avatar.vrm?v=' + Date.now(), // Cache-buster para que siempre cargue el avatar más nuevo
+    'models/AsistenteTI.vrm?v=' + Date.now(), // Cache-buster para que siempre cargue el avatar más nuevo
     (gltf) => {
         const vrm = gltf.userData.vrm;
         // IMPORTANTE: Se eliminó removeUnnecessaryJoints porque rompe la malla (mesh)
@@ -41,8 +41,8 @@ loader.load(
         scene.add(vrm.scene);
         currentVrm = vrm;
 
-        // El avatar mira la cámara
-        vrm.scene.rotation.y = Math.PI;
+        // El avatar mira la cámara (ajuste para el nuevo modelo)
+        vrm.scene.rotation.y = 0;
 
         // --- POSTURA NATURAL (Modificar T-Pose) ---
         const leftUpperArm = vrm.humanoid.getNormalizedBoneNode('leftUpperArm');
@@ -51,14 +51,25 @@ loader.load(
         const rightLowerArm = vrm.humanoid.getNormalizedBoneNode('rightLowerArm');
 
         if (leftUpperArm && rightUpperArm) {
-            // Un ángulo un poco más abierto para que la ropa no se atraviese con el torso
-            leftUpperArm.rotation.z = 1.1;
-            rightUpperArm.rotation.z = -1.1;
+            // Un ángulo ajustado para que los brazos bajen de forma natural
+            leftUpperArm.rotation.z = -1.1;
+            rightUpperArm.rotation.z = 1.1;
         }
         if (leftLowerArm && rightLowerArm) {
             leftLowerArm.rotation.x = -0.2;
             rightLowerArm.rotation.x = -0.2;
         }
+
+        // --- POSTURA NATURAL DE LAS MANOS (Curvar dedos) ---
+        const fingers = ['Thumb', 'Index', 'Middle', 'Ring', 'Little'];
+        fingers.forEach(finger => {
+            ['Proximal', 'Intermediate'].forEach(joint => {
+                const lFinger = vrm.humanoid.getNormalizedBoneNode(`left${finger}${joint}`);
+                const rFinger = vrm.humanoid.getNormalizedBoneNode(`right${finger}${joint}`);
+                if (lFinger) { lFinger.rotation.z = 0.1; lFinger.rotation.x = -0.05; }
+                if (rFinger) { rFinger.rotation.z = -0.1; rFinger.rotation.x = -0.05; }
+            });
+        });
     },
     (progress) => console.log('Cargando Avatar...', Math.round(100.0 * (progress.loaded / progress.total)), '%'),
     (error) => {
@@ -72,6 +83,15 @@ loader.load(
 let audioContext = null;
 let analyser = null;
 let dataArray = null;
+
+// Variables para el seguimiento del ratón
+let mouseX = 0;
+let mouseY = 0;
+document.addEventListener('mousemove', (event) => {
+    // Normalizar coordenadas a rango [-1, 1]
+    mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+    mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+});
 
 const clock = new THREE.Clock();
 let currentMouthOpen = 0; // Para suavizar el movimiento de la boca
@@ -89,7 +109,7 @@ function animate() {
         if (time > nextBlinkTime) {
             currentVrm.expressionManager.setValue('blink', 1.0);
             setTimeout(() => {
-                if(currentVrm) currentVrm.expressionManager.setValue('blink', 0.0);
+                if (currentVrm) currentVrm.expressionManager.setValue('blink', 0.0);
             }, 150); // Cierra los ojos por 150ms
             nextBlinkTime = time + 2 + Math.random() * 4; // Siguiente parpadeo en 2 a 6 segundos
         }
@@ -101,9 +121,33 @@ function animate() {
             spine.rotation.x = Math.sin(time * 1.5) * 0.015; // Pecho inflándose (respiración)
             spine.rotation.y = Math.sin(time * 0.7) * 0.02;  // Balanceo del torso
         }
+        // Offset para centrar la mirada en la nariz en vez del centro de la pantalla
+        const offsetX = 0.0;
+        const offsetY = 0.55; // Nivel de la cara en la ventana (ajusta si es necesario)
+
         if (head) {
-            head.rotation.y = Math.sin(time * 0.7) * 0.01;   // Cabeza siguiendo el balanceo
+            // Seguimiento del cursor con la cabeza (Lerp suave) + balanceo natural
+            // Se usa +mouseX para corregir el eje invertido izquierda-derecha
+            const targetHeadY = Math.sin(time * 0.7) * 0.01 + (mouseX - offsetX) * 0.5;
+            const targetHeadX = -(mouseY - offsetY) * 0.3; // Invertido para mirar arriba/abajo correctamente
+            
+            head.rotation.y += (targetHeadY - head.rotation.y) * 0.1;
+            head.rotation.x += (targetHeadX - head.rotation.x) * 0.1;
             head.rotation.z = Math.cos(time * 0.5) * 0.01;   // Ligero ladeo de la cabeza
+        }
+        
+        // 2.5 Ojos siguiendo el ratón
+        const leftEye = currentVrm.humanoid.getNormalizedBoneNode('leftEye');
+        const rightEye = currentVrm.humanoid.getNormalizedBoneNode('rightEye');
+        if (leftEye && rightEye) {
+            // Movimiento muy sutil para que las pupilas no se salgan del globo ocular
+            const targetEyeY = (mouseX - offsetX) * 0.15; // Corregido izquierda-derecha y limitado rango
+            const targetEyeX = -(mouseY - offsetY) * 0.15; // Limitado rango arriba-abajo
+            
+            leftEye.rotation.y += (targetEyeY - leftEye.rotation.y) * 0.2;
+            leftEye.rotation.x += (targetEyeX - leftEye.rotation.x) * 0.2;
+            rightEye.rotation.y += (targetEyeY - rightEye.rotation.y) * 0.2;
+            rightEye.rotation.x += (targetEyeX - rightEye.rotation.x) * 0.2;
         }
 
         // 3. Lip-Sync Suavizado (Sin afectar los ojos)
@@ -122,13 +166,36 @@ function animate() {
                 targetMouthOpen = Math.min((volume / 40) * 1.2, 0.9);
             }
         }
-        
+
         // Suavizado matemático (Lerp) para quitar el temblor robótico
         currentMouthOpen += (targetMouthOpen - currentMouthOpen) * 0.35;
-        
+
         // Solo usamos vocales directas para evitar deformar los ojos
         currentVrm.expressionManager.setValue('aa', currentMouthOpen * 0.85);
         currentVrm.expressionManager.setValue('ou', currentMouthOpen * 0.15); // Un toque de redondez
+        
+        // 4. Movimiento Orgánico de Brazos (Siempre en reposo natural)
+        const leftUpperArm = currentVrm.humanoid.getNormalizedBoneNode('leftUpperArm');
+        const rightUpperArm = currentVrm.humanoid.getNormalizedBoneNode('rightUpperArm');
+        const leftLowerArm = currentVrm.humanoid.getNormalizedBoneNode('leftLowerArm');
+        const rightLowerArm = currentVrm.humanoid.getNormalizedBoneNode('rightLowerArm');
+
+        if (leftUpperArm && rightUpperArm) {
+            // Posición: Reposo natural con leve respiración
+            leftUpperArm.rotation.x = 0;
+            rightUpperArm.rotation.x = 0;
+            leftUpperArm.rotation.z = -1.1 + Math.sin(time * 1.5) * 0.03;
+            rightUpperArm.rotation.z = 1.1 + Math.cos(time * 1.5) * 0.03;
+            
+            if (leftLowerArm && rightLowerArm) {
+                leftLowerArm.rotation.x = -0.2 + Math.sin(time * 1.2) * 0.05;
+                rightLowerArm.rotation.x = -0.2 + Math.cos(time * 1.2) * 0.05;
+                leftLowerArm.rotation.y = 0;
+                rightLowerArm.rotation.y = 0;
+                leftLowerArm.rotation.z = 0;
+                rightLowerArm.rotation.z = 0;
+            }
+        }
     }
 
     // Enfocar cámara al nivel del pecho/abdomen superior
