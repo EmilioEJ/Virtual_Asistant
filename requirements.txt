@@ -1,0 +1,10 @@
+google-generativeai==0.8.3
+python-dotenv==1.0.1
+openai
+pymupdf
+transformers
+torch
+soundfile
+scipy
+opencv-python
+websockets

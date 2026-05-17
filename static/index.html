@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARIA - Asistente Universitario</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Three.js y VRM para el Avatar -->
+    <!-- Async script loading for Three.js modern versions -->
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+            "@pixiv/three-vrm": "https://unpkg.com/@pixiv/three-vrm@3.1.0/lib/three-vrm.module.js"
+          }
+        }
+    </script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Panel Izquierdo: Chat -->
+        <main class="chat-panel">
+            <header>
+                <div class="logo-area">
+                    <div class="status-dot"></div>
+                    <h1>Asistente <span>Virtual</span></h1>
+                </div>
+                <p class="subtitle">Ingeniería en Tecnologías de la Información</p>
+            </header>
+            
+            <div class="chat-box" id="chatBox">
+                <!-- Los mensajes del chat irán aquí -->
+            </div>
+
+            <div class="input-area">
+                <button id="micBtn" class="mic-btn" title="Activar micrófono">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
+                    </svg>
+                </button>
+                <input type="text" id="userInput" placeholder="Escribe o presiona el micrófono..." autocomplete="off">
+                <button id="sendBtn" title="Enviar texto">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                </button>
+            </div>
+        </main>
+
+        <!-- Panel Derecho: Visor 3D y Cámara (Próximamente) -->
+        <aside class="avatar-panel">
+            <div id="canvas-container"></div>
+            
+            <!-- Etiqueta sobrepuesta estilo ciber/HUD -->
+            <div class="hud-overlay">
+                <div class="hud-box">
+                    <span class="hud-label">SISTEMA VISUAL</span>
+                    <span class="hud-value">ONLINE</span>
+                </div>
+                <div class="hud-box">
+                    <span class="hud-label">ESTADO DE CÁMARA</span>
+                    <span class="hud-value camera-status">ESPERANDO FASE 2...</span>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
