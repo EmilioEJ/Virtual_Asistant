@@ -8,3 +8,8 @@ soundfile
 scipy
 opencv-python
 websockets
+fastapi
+uvicorn
+edge-tts
+pydantic
+python-multipart
