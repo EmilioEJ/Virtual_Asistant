@@ -3,7 +3,9 @@ import os
 import asyncio
 import cv2
 import edge_tts
-import fitz  # PyMuPDF — para extraer texto del PDF localmente
+import fitz  # PyMuPDF
+from sentence_transformers import SentenceTransformer
+import chromadb
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -23,6 +25,9 @@ openai_history = []      # Historial de mensajes para SiliconFlow (OpenAI-style)
 ws_clients = set()
 gemini_lock = asyncio.Lock()
 
+embedder = None
+chroma_collection = None
+
 AI_PROVIDER = os.getenv("AI_PROVIDER", "gemini").lower()  # "gemini" | "siliconflow" | "groq" | "openwebui"
 
 SYSTEM_INSTRUCTION = (
@@ -38,8 +43,8 @@ SYSTEM_INSTRUCTION = (
     "4. NUNCA inventes, supongas ni inferas información que no esté literalmente presente en el documento. "
     "5. NUNCA uses emojis ni emoticonos. Solo texto plano. "
     "6. NUNCA respondas preguntas sobre otros temas aunque el usuario insista, sea amable o formule la pregunta de manera indirecta. "
-    "7. Si no encuentras la respuesta en el documento, di: 'No encontré esa información en el documento de la carrera.' "
-
+    "7. Si no encuentras la respuesta en el documento, di: 'No encontré esa información en el documento de la carrera.' \n"
+    "8. MUY IMPORTANTE: En el contexto de esta carrera, las palabras 'Semestre' y 'Nivel' son sinónimos exactos. Si el usuario pregunta por 'semestres', busca y responde usando la información de los 'niveles'. "
     "Recuerda: Tu conocimiento está limitado estrictamente al documento oficial de la carrera universitaria. Cualquier otra solicitud debe ser rechazada cortésmente con las frases indicadas."
 )
 
@@ -85,7 +90,7 @@ def init_gemini():
             raise Exception("Error al procesar el archivo en Gemini.")
         return file
 
-    pdf_file = upload_and_wait("carrera_iti.pdf")
+    pdf_file = upload_and_wait("Investigación Carrera TI Indoamérica Quito.pdf")
     model_name = os.getenv("GEMINI_MODEL_NAME", "gemini-2.5-flash-lite")
     generation_config = genai.types.GenerationConfig(
         temperature=0.1,       # Baja temperatura para reducir alucinaciones
@@ -120,19 +125,10 @@ def _init_openai_compatible(api_key: str, base_url: str, model_name: str, provid
 
     openai_client = OpenAI(api_key=api_key, base_url=base_url)
 
-    # Extraer texto del PDF localmente y meterlo en el contexto del sistema
-    pdf_text = extract_pdf_text("carrera_iti.pdf")
-    system_with_pdf = (
-        SYSTEM_INSTRUCTION +
-        "\n\n--- INICIO DEL DOCUMENTO DE LA CARRERA ---\n" +
-        pdf_text +
-        "\n--- FIN DEL DOCUMENTO ---"
-    )
-
     openai_history = [
-        {"role": "system", "content": system_with_pdf}
+        {"role": "system", "content": SYSTEM_INSTRUCTION}
     ]
-    print(f"✅ {provider_name} ({model_name}) inicializado con texto del PDF extraído localmente.")
+    print(f"✅ {provider_name} ({model_name}) inicializado.")
 
 def init_siliconflow():
     _init_openai_compatible(
@@ -164,7 +160,18 @@ def init_openwebui():
 
 @app.on_event("startup")
 def startup_event():
+    global embedder, chroma_collection
     try:
+        # Inicializar base de datos vectorial (RAG)
+        try:
+            print("🧠 Inicializando RAG (Cargando Embedder y ChromaDB)...")
+            embedder = SentenceTransformer("all-MiniLM-L6-v2")
+            chroma_client = chromadb.PersistentClient(path="./chroma_db")
+            chroma_collection = chroma_client.get_collection(name="carrera_ti_indoamerica_collection")
+            print(f"✅ RAG Inicializado. Fragmentos cargados: {chroma_collection.count()}")
+        except Exception as rag_e:
+            print(f"⚠️ No se pudo iniciar RAG. Asegúrate de ejecutar build_rag_index.py primero. Error: {rag_e}")
+
         if AI_PROVIDER == "siliconflow":
             init_siliconflow()
         elif AI_PROVIDER == "groq":
@@ -207,7 +214,7 @@ async def chat_gemini(message: str):
     return {"reply": response.text}
 
 async def chat_siliconflow(message: str):
-    global openai_client, openai_history
+    global openai_client, openai_history, embedder, chroma_collection
     if not openai_client:
         raise HTTPException(status_code=500, detail="El cliente no está inicializado.")
 
@@ -217,17 +224,51 @@ async def chat_siliconflow(message: str):
         model_name = os.getenv("OPENWEBUI_MODEL_NAME", "qwen2.5-coder:14b")
     else:
         model_name = os.getenv("SILICONFLOW_MODEL_NAME", "deepseek-ai/DeepSeek-V3")
-    openai_history.append({"role": "user", "content": message})
+        
+    # --- PROCESO DE RECUPERACIÓN RAG CON QUERY EXPANSION ---
+    context_text = ""
+    if embedder and chroma_collection:
+        # Enriquecer la búsqueda (Query Expansion) para sortear problemas de sinónimos
+        search_query = message.lower()
+        if "semestre" in search_query or "nivel" in search_query:
+            search_query += " niveles malla curricular semestres tabla"
+        if "materia" in search_query or "asignatura" in search_query:
+            search_query += " asignaturas materias plan de estudios malla curricular tabla"
+
+        query_embedding = embedder.encode(search_query).tolist()
+        results = chroma_collection.query(
+            query_embeddings=[query_embedding],
+            n_results=6 # Aumentamos a 6 fragmentos (casi 15,000 caracteres) para garantizar atrapar toda la tabla
+        )
+        if results['documents'] and len(results['documents'][0]) > 0:
+            context_text = "\n\n--- INFORMACIÓN RECUPERADA DEL DOCUMENTO OFICIAL ---\n"
+            for idx, doc in enumerate(results['documents'][0]):
+                context_text += f"[Contexto {idx+1}]: {doc}\n"
+            context_text += "----------------------------------------------------\n"
+            context_text += "Utiliza la información anterior para responder a la pregunta del usuario. Si la información no responde la pregunta, indícalo educadamente."
+            print(f"🔍 RAG: Recuperados {len(results['documents'][0])} fragmentos para la pregunta.")
+
+    # Clonamos el historial para enviar el contexto sin ensuciar el historial real
+    temp_messages = list(openai_history)
+    user_message_with_context = message
+    if context_text:
+        user_message_with_context += context_text
+
+    temp_messages.append({"role": "user", "content": user_message_with_context})
 
     response = await asyncio.to_thread(
         lambda: openai_client.chat.completions.create(
             model=model_name,
-            messages=openai_history,
+            messages=temp_messages,
             temperature=0.1,      # Baja temperatura para reducir alucinaciones
         )
     )
     reply = response.choices[0].message.content
+    
+    # Guardamos en el historial solo la conversación limpia
+    openai_history.append({"role": "user", "content": message})
     openai_history.append({"role": "assistant", "content": reply})
+    
     return {"reply": reply}
 
 # ============================================================
@@ -248,6 +289,28 @@ async def tts_endpoint(data: MessageInput):
         return StreamingResponse(buf, media_type="audio/mpeg")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================
+# Debug Endpoints (Para diagnosticar problemas de RAG)
+# ============================================================
+@app.get("/debug/md")
+async def debug_md():
+    import pymupdf4llm
+    import os
+    pdf_path = "Investigación Carrera TI Indoamérica Quito.pdf"
+    if not os.path.exists(pdf_path):
+        return {"error": "PDF no encontrado"}
+    md_text = pymupdf4llm.to_markdown(pdf_path)
+    return {"text": md_text}
+
+@app.get("/debug/rag")
+async def debug_rag(q: str):
+    global embedder, chroma_collection
+    if not embedder or not chroma_collection:
+        return {"error": "RAG no está inicializado"}
+    query_embedding = embedder.encode(q).tolist()
+    results = chroma_collection.query(query_embeddings=[query_embedding], n_results=4)
+    return {"results": results}
 
 # ============================================================
 # WebSocket (Visión Artificial)

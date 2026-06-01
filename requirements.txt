@@ -13,3 +13,8 @@ uvicorn
 edge-tts
 pydantic
 python-multipart
+chromadb
+sentence-transformers
+langchain-text-splitters
+pymupdf4llm
+markdown
