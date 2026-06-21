@@ -6,7 +6,7 @@ import edge_tts
 import fitz  # PyMuPDF
 from sentence_transformers import SentenceTransformer
 import chromadb
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, UploadFile, File
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -50,6 +50,7 @@ SYSTEM_INSTRUCTION = (
 
 class MessageInput(BaseModel):
     message: str
+    mode: str = "chat" # Puede ser "chat" o "conversational"
 
 # ============================================================
 # Utilidades comunes
@@ -194,9 +195,9 @@ def startup_event():
 async def chat_endpoint(data: MessageInput):
     try:
         if AI_PROVIDER in ("siliconflow", "groq", "openwebui"):
-            return await chat_siliconflow(data.message)
+            return await chat_siliconflow(data.message, data.mode)
         else:
-            return await chat_gemini(data.message)
+            return await chat_gemini(data.message, data.mode)
     except Exception as e:
         error_msg = str(e).lower()
         if "quota" in error_msg or "429" in error_msg or "rate" in error_msg:
@@ -205,15 +206,52 @@ async def chat_endpoint(data: MessageInput):
             return {"reply": "(Un momento, sigo procesando mi respuesta anterior)."}
         raise HTTPException(status_code=500, detail="Error de IA: " + str(e))
 
-async def chat_gemini(message: str):
+# ============================================================
+# Endpoint de Voz a Texto (Whisper STT)
+# ============================================================
+@app.post("/api/stt")
+async def stt_endpoint(audio: UploadFile = File(...)):
+    from openai import OpenAI
+    groq_api_key = os.getenv("GROQ_API_KEY")
+    if not groq_api_key:
+        raise HTTPException(status_code=500, detail="Falta GROQ_API_KEY en .env")
+
+    try:
+        # Groq Audio API usa el cliente de OpenAI compatible
+        stt_client = OpenAI(
+            api_key=groq_api_key,
+            base_url="https://api.groq.com/openai/v1"
+        )
+        
+        # Leemos el archivo enviado por el navegador
+        audio_bytes = await audio.read()
+        
+        # Whisper requiere un nombre de archivo con extensión reconocida
+        transcription = await asyncio.to_thread(
+            stt_client.audio.transcriptions.create,
+            model="whisper-large-v3",
+            file=(audio.filename or "audio.webm", audio_bytes),
+            language="es"
+        )
+        return {"text": transcription.text}
+    except Exception as e:
+        print(f"Error en STT Whisper: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+async def chat_gemini(message: str, mode: str):
     global chat_session, gemini_lock
     if not chat_session:
         raise HTTPException(status_code=500, detail="El modelo Gemini no está inicializado.")
+    
+    prompt = message
+    if mode == "conversational":
+        prompt += "\n\n(Regla del sistema para este mensaje: Responde de manera MUY BREVE y conversacional, ya que el usuario está usando la entrada por voz)."
+
     async with gemini_lock:
-        response = await asyncio.to_thread(chat_session.send_message, message)
+        response = await asyncio.to_thread(chat_session.send_message, prompt)
     return {"reply": response.text}
 
-async def chat_siliconflow(message: str):
+async def chat_siliconflow(message: str, mode: str):
     global openai_client, openai_history, embedder, chroma_collection
     if not openai_client:
         raise HTTPException(status_code=500, detail="El cliente no está inicializado.")
@@ -253,6 +291,9 @@ async def chat_siliconflow(message: str):
     user_message_with_context = message
     if context_text:
         user_message_with_context += context_text
+
+    if mode == "conversational":
+        user_message_with_context += "\n\n(Regla del sistema: El usuario te está hablando por micrófono. Tus respuestas DEBEN SER MUY CORTAS, concisas y directas. No uses párrafos largos ni listas detalladas. Mantén una charla natural y fluida.)"
 
     temp_messages.append({"role": "user", "content": user_message_with_context})
 

@@ -245,19 +245,27 @@ function removeLoading() {
     if (loadingDiv) loadingDiv.remove();
 }
 
-async function sendMessage() {
-    const text = userInput.value.trim();
+let currentMode = "chat"; // "chat" o "conversational"
+
+async function sendMessage(textToSend = null) {
+    const text = textToSend !== null ? textToSend : userInput.value.trim();
     if (!text) return;
 
-    addMessage(text, true);
-    userInput.value = '';
-    showLoading();
+    if (currentMode === "chat") {
+        addMessage(text, true);
+        userInput.value = '';
+        showLoading();
+    } else {
+        // En modo conversacional, animamos las ondas para indicar que la IA está pensando
+        document.getElementById('convStatus').textContent = "Aria está pensando...";
+        document.getElementById('convWaves').classList.add('active');
+    }
 
     try {
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: text })
+            body: JSON.stringify({ message: text, mode: currentMode })
         });
 
         const data = await response.json();
@@ -266,45 +274,60 @@ async function sendMessage() {
             // En vez de mostrar el texto rápido, esperamos a sincronizar el audio
             await speakTextAndShow(data.reply);
         } else {
-            removeLoading();
-            addMessage('Error: ' + (data.detail || 'Problema de conexión.'));
+            if (currentMode === "chat") {
+                removeLoading();
+                addMessage('Error: ' + (data.detail || 'Problema de conexión.'));
+            } else {
+                document.getElementById('convStatus').textContent = "Error de conexión";
+                document.getElementById('convWaves').classList.remove('active');
+            }
         }
     } catch (error) {
-        removeLoading();
-        addMessage('Error de red al conectar con el servidor.');
+        if (currentMode === "chat") {
+            removeLoading();
+            addMessage('Error de red al conectar con el servidor.');
+        } else {
+            document.getElementById('convStatus').textContent = "Error de red";
+            document.getElementById('convWaves').classList.remove('active');
+        }
     }
 }
 
 // Enviar evento invisible al chat
 async function sendHiddenEvent(hiddenPrompt) {
-    showLoading();
+    if (currentMode === "chat") showLoading();
     try {
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: hiddenPrompt })
+            body: JSON.stringify({ message: hiddenPrompt, mode: currentMode })
         });
         const data = await response.json();
         if (response.ok) {
             await speakTextAndShow(data.reply);
         } else {
-            removeLoading();
+            if (currentMode === "chat") removeLoading();
         }
     } catch (e) {
-        removeLoading();
+        if (currentMode === "chat") removeLoading();
     }
 }
-sendBtn.addEventListener('click', sendMessage);
+sendBtn.addEventListener('click', () => sendMessage(null));
 userInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendMessage();
+    if (e.key === 'Enter') sendMessage(null);
 });
 
 // 2.1 Text-to-Speech Sincronizado (El VRM Habla)
 async function speakTextAndShow(text) {
     let cleanText = text.replace(/[*#_]/g, '').trim();
     if (!cleanText) {
-        removeLoading();
-        addMessage(text, false);
+        if (currentMode === "chat") {
+            removeLoading();
+            addMessage(text, false);
+        } else {
+            document.getElementById('convStatus').textContent = "Toca el micrófono para hablar con Aria";
+            document.getElementById('convWaves').classList.remove('active');
+        }
         return;
     }
 
@@ -324,12 +347,17 @@ async function speakTextAndShow(text) {
         const response = await fetch('/api/tts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: cleanText })
+            body: JSON.stringify({ message: cleanText, mode: currentMode })
         });
 
         if (!response.ok) {
-            removeLoading();
-            addMessage(text, false);
+            if (currentMode === "chat") {
+                removeLoading();
+                addMessage(text, false);
+            } else {
+                document.getElementById('convStatus').textContent = "Error reproduciendo voz";
+                document.getElementById('convWaves').classList.remove('active');
+            }
             return;
         }
 
@@ -349,59 +377,185 @@ async function speakTextAndShow(text) {
         source.connect(analyser);
         analyser.connect(audioContext.destination);
 
-        audio.onplay = () => { isSpeaking = true; };
+        audio.onplay = () => { 
+            isSpeaking = true; 
+            if (currentMode === "conversational") {
+                document.getElementById('convStatus').textContent = "Aria está hablando...";
+            }
+        };
         audio.onended = () => {
             isSpeaking = false;
             if (currentVrm) {
                 currentVrm.expressionManager.setValue('aa', 0);
                 currentVrm.expressionManager.setValue('happy', 0);
             }
+            if (currentMode === "conversational") {
+                document.getElementById('convStatus').textContent = "Toca el micrófono para hablar con Aria";
+                document.getElementById('convWaves').classList.remove('active');
+            }
         };
 
         // ---> Sincronización <---
-        // Eliminamos el indicador de carga y mostramos el mensaje JUSTO antes de reproducir el audio
-        removeLoading();
-        addMessage(text, false);
+        if (currentMode === "chat") {
+            removeLoading();
+            addMessage(text, false);
+        }
         await audio.play();
 
     } catch (err) {
         console.error("Error conectando con la voz neuronal:", err);
-        removeLoading();
-        addMessage(text, false);
+        if (currentMode === "chat") {
+            removeLoading();
+            addMessage(text, false);
+        } else {
+            document.getElementById('convStatus').textContent = "Toca el micrófono para hablar con Aria";
+            document.getElementById('convWaves').classList.remove('active');
+        }
     }
 }
 
 // 2.2 Speech-to-Text (El VRM Escucha)
+// 2.2 Speech-to-Text (MediaRecorder -> Backend Groq Whisper)
 const micBtn = document.getElementById('micBtn');
-let recognition;
-if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.lang = 'es-MX';
-    recognition.continuous = false;
+const bigMicBtn = document.getElementById('bigMicBtn');
 
-    recognition.onstart = () => {
-        micBtn.classList.add('recording');
-        userInput.placeholder = "Escuchando...";
-    };
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecordingAudio = false;
 
-    recognition.onresult = (event) => {
-        userInput.value = event.results[0][0].transcript;
-        sendMessage();
-    };
+async function startRecording() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
 
-    recognition.onend = () => {
-        micBtn.classList.remove('recording');
-        userInput.placeholder = "Escribe o presiona el micrófono...";
-    };
+        mediaRecorder.ondataavailable = event => {
+            if (event.data.size > 0) audioChunks.push(event.data);
+        };
 
-    if (micBtn) {
-        micBtn.addEventListener('click', () => {
-            if (micBtn.classList.contains('recording')) recognition.stop();
-            else try { recognition.start(); } catch (e) { }
-        });
+        mediaRecorder.onstart = () => {
+            isRecordingAudio = true;
+            if (currentMode === "chat") {
+                micBtn.classList.add('recording');
+                userInput.placeholder = "Escuchando...";
+            } else {
+                bigMicBtn.classList.add('listening');
+                document.getElementById('convStatus').textContent = "Escuchando...";
+                document.getElementById('convWaves').classList.remove('active');
+            }
+        };
+
+        mediaRecorder.onstop = async () => {
+            isRecordingAudio = false;
+            // Detener el uso del micrófono
+            mediaRecorder.stream.getTracks().forEach(t => t.stop());
+
+            if (currentMode === "chat") {
+                micBtn.classList.remove('recording');
+                userInput.placeholder = "Transcribiendo...";
+            } else {
+                bigMicBtn.classList.remove('listening');
+                document.getElementById('convStatus').textContent = "Transcribiendo audio...";
+            }
+
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            await sendAudioToBackend(audioBlob);
+        };
+
+        mediaRecorder.start();
+
+    } catch (err) {
+        console.error("Error al acceder al micrófono:", err);
+        alert("Permiso de micrófono denegado o dispositivo no encontrado.");
     }
 }
+
+function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+    }
+}
+
+async function sendAudioToBackend(audioBlob) {
+    const formData = new FormData();
+    // Le ponemos extensión .webm para que Whisper lo reconozca
+    formData.append("audio", audioBlob, "grabacion.webm");
+
+    try {
+        const response = await fetch('/api/stt', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) throw new Error("Error en el servidor STT");
+
+        const data = await response.json();
+        const text = data.text.trim();
+
+        if (text) {
+            if (currentMode === "chat") {
+                userInput.value = text;
+                sendMessage(null);
+            } else {
+                sendMessage(text);
+            }
+        } else {
+            if (currentMode === "chat") {
+                userInput.placeholder = "No se detectó voz.";
+            } else {
+                document.getElementById('convStatus').textContent = "No se detectó voz.";
+            }
+        }
+    } catch (error) {
+        console.error("Error transcribiendo el audio:", error);
+        alert("Error al transcribir el audio. ¿Está configurado Groq en el .env?");
+        if (currentMode === "chat") {
+            userInput.placeholder = "Escribe o presiona el micrófono...";
+        } else {
+            document.getElementById('convStatus').textContent = "Toca el micrófono para hablar con Aria";
+        }
+    }
+}
+
+function handleMicClick() {
+    if (isRecordingAudio) {
+        stopRecording();
+    } else {
+        startRecording();
+    }
+}
+
+if (micBtn) micBtn.addEventListener('click', handleMicClick);
+if (bigMicBtn) bigMicBtn.addEventListener('click', handleMicClick);
+
+
+// ==========================================
+// 2.3 UI Mode Toggler
+// ==========================================
+const modeChatBtn = document.getElementById('modeChatBtn');
+const modeConvBtn = document.getElementById('modeConvBtn');
+const chatModeContainer = document.getElementById('chatModeContainer');
+const convModeContainer = document.getElementById('convModeContainer');
+
+modeChatBtn.addEventListener('click', () => {
+    currentMode = "chat";
+    modeChatBtn.classList.add('active');
+    modeConvBtn.classList.remove('active');
+    chatModeContainer.classList.add('active-mode');
+    chatModeContainer.classList.remove('hidden-mode');
+    convModeContainer.classList.remove('active-mode');
+    convModeContainer.classList.add('hidden-mode');
+});
+
+modeConvBtn.addEventListener('click', () => {
+    currentMode = "conversational";
+    modeConvBtn.classList.add('active');
+    modeChatBtn.classList.remove('active');
+    convModeContainer.classList.add('active-mode');
+    convModeContainer.classList.remove('hidden-mode');
+    chatModeContainer.classList.remove('active-mode');
+    chatModeContainer.classList.add('hidden-mode');
+});
 
 // ==========================================
 // 3. WebSockets (Fase Final: OpenCV)

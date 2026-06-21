@@ -31,21 +31,44 @@
                 <p class="subtitle">Ingeniería en Tecnologías de la Información</p>
             </header>
             
-            <div class="chat-box" id="chatBox">
-                <!-- Los mensajes del chat irán aquí -->
+            <nav class="mode-selector">
+                <button id="modeChatBtn" class="mode-btn active">💬 Chatear</button>
+                <button id="modeConvBtn" class="mode-btn">🎙️ Conversar</button>
+            </nav>
+
+            <div id="chatModeContainer" class="mode-container active-mode">
+                <div class="chat-box" id="chatBox">
+                    <!-- Los mensajes del chat irán aquí -->
+                </div>
+
+                <div class="input-area">
+                    <button id="micBtn" class="mic-btn" title="Activar micrófono">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
+                        </svg>
+                    </button>
+                    <input type="text" id="userInput" placeholder="Escribe o presiona el micrófono..." autocomplete="off">
+                    <button id="sendBtn" title="Enviar texto">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                    </button>
+                </div>
             </div>
 
-            <div class="input-area">
-                <button id="micBtn" class="mic-btn" title="Activar micrófono">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
-                    </svg>
-                </button>
-                <input type="text" id="userInput" placeholder="Escribe o presiona el micrófono..." autocomplete="off">
-                <button id="sendBtn" title="Enviar texto">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-                </button>
+            <div id="convModeContainer" class="mode-container hidden-mode">
+                <div class="conversational-ui">
+                    <div class="conv-status" id="convStatus">Toca el micrófono para hablar con Aria</div>
+                    <button id="bigMicBtn" class="big-mic-btn" title="Iniciar Conversación">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M12 1a4 4 0 0 0-4 4v7a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4z"/>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
+                        </svg>
+                    </button>
+                    <div class="conv-waves" id="convWaves">
+                        <!-- Animación de ondas de voz se manejará por CSS -->
+                        <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
             </div>
         </main>
 
