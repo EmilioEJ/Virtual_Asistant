@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aria - Panel de Administración</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: #0d0914; /* Deep dark purple base */
+            background-image: 
+                radial-gradient(circle at top right, rgba(163, 112, 240, 0.25), transparent 50%),
+                radial-gradient(circle at bottom left, rgba(105, 50, 180, 0.2), transparent 50%);
+            font-family: 'Inter', sans-serif;
+            color: #ffffff; /* Brighter text for legibility */
+        }
+
+        .admin-container {
+            background: rgba(30, 20, 50, 0.6); /* Darker purple glass */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(163, 112, 240, 0.3); /* Purple border */
+            border-radius: 24px;
+            padding: 40px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 15px 45px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-card {
+            background: rgba(0,0,0,0.35); /* Darker inner card */
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid rgba(163, 112, 240, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .drop-zone {
+            border: 2px dashed rgba(163, 112, 240, 0.4);
+            border-radius: 16px;
+            padding: 50px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .drop-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(163, 112, 240, 0.1);
+        }
+
+        .drop-zone p {
+            margin: 10px 0;
+            color: #d1bdf5; /* Light purple text */
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-list {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .file-badge {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-upload {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: opacity 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-upload:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Terminal de progreso */
+        .progress-container {
+            display: none; /* Se muestra al iniciar */
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.3s ease;
+        }
+
+        .terminal-logs {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            color: #00ff00;
+            border: 1px solid #333;
+        }
+
+        .terminal-logs p {
+            margin: 2px 0;
+        }
+        
+        .header-links {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-container">
+        <div class="header-links">
+            <h1>⚙️ Base de Conocimiento (RAG)</h1>
+            <a href="/" class="back-link">← Volver al Asistente</a>
+        </div>
+        
+        <div class="status-card">
+            <div>
+                <strong>Estado Actual de la Base de Datos:</strong>
+                <div id="dbStatusText" style="color: #d1bdf5; font-size: 0.9rem;">Cargando...</div>
+            </div>
+            <div>
+                <span id="dbBadge" style="background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 20px; font-size: 0.8rem;">? Fragmentos</span>
+            </div>
+        </div>
+
+        <div id="uploadSection">
+            <div class="drop-zone" id="dropZone">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <p>Arrastra tus archivos PDF aquí</p>
+                <p style="font-size: 0.8rem;">O haz clic para seleccionar (Se reemplazarán los datos actuales)</p>
+                <input type="file" id="fileInput" accept="application/pdf" multiple>
+            </div>
+            
+            <div class="file-list" id="fileList"></div>
+            
+            <button class="btn-upload" id="uploadBtn" disabled>Procesar e Indexar Documentos</button>
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+            <h3 style="margin:0; font-size: 1rem; color: var(--text-main);">Procesando Documentos...</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="terminal-logs" id="terminalLogs">
+                <p>> Esperando inicio del proceso...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

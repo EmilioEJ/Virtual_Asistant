@@ -6,7 +6,8 @@ import edge_tts
 import fitz  # PyMuPDF
 from sentence_transformers import SentenceTransformer
 import chromadb
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, UploadFile, File
+from typing import List
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, UploadFile, File, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -237,6 +238,67 @@ async def stt_endpoint(audio: UploadFile = File(...)):
     except Exception as e:
         print(f"Error en STT Whisper: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================
+# Endpoints de Panel de Administración RAG
+# ============================================================
+from rag_manager import process_pdfs_async, get_rag_status
+
+def _reload_rag_collection():
+    global chroma_collection
+    try:
+        print("🔄 Recargando colección ChromaDB en memoria...")
+        chroma_client = chromadb.PersistentClient(path="./chroma_db")
+        chroma_collection = chroma_client.get_collection(name="carrera_ti_indoamerica_collection")
+        print("✅ Colección recargada exitosamente.")
+    except Exception as e:
+        print(f"⚠️ Error al recargar colección ChromaDB: {e}")
+
+async def background_process_docs(file_paths: List[str]):
+    # Ejecuta el procesamiento de rag_manager
+    await process_pdfs_async(file_paths)
+    # Una vez terminado, refrescamos la conexión en memoria de la API
+    _reload_rag_collection()
+
+@app.post("/api/admin/upload_docs")
+async def upload_docs(background_tasks: BackgroundTasks, files: List[UploadFile] = File(...)):
+    # Rechazar si ya hay un proceso en curso
+    status = get_rag_status()
+    if status.get("is_processing"):
+        raise HTTPException(status_code=400, detail="Ya hay un procesamiento RAG en curso.")
+
+    # Guardar archivos temporalmente
+    os.makedirs("docs_temp", exist_ok=True)
+    file_paths = []
+    
+    for file in files:
+        if not file.filename.lower().endswith(".pdf"):
+            continue
+        file_path = os.path.join("docs_temp", file.filename)
+        with open(file_path, "wb") as f:
+            f.write(await file.read())
+        file_paths.append(file_path)
+
+    if not file_paths:
+        raise HTTPException(status_code=400, detail="No se enviaron archivos PDF válidos.")
+
+    # Iniciar procesamiento en background
+    background_tasks.add_task(background_process_docs, file_paths)
+    return {"message": f"Procesamiento de {len(file_paths)} archivos iniciado en background."}
+
+@app.get("/api/admin/rag_status")
+async def rag_status_endpoint():
+    status = get_rag_status()
+    # Retorna el estado global del progreso
+    # Calculamos también el número de documentos actuales en DB
+    global chroma_collection
+    docs_in_db = chroma_collection.count() if chroma_collection else 0
+    return {
+        "is_processing": status["is_processing"],
+        "progress_percent": status["progress_percent"],
+        "logs": status["logs"][-15:], # Últimos 15 logs
+        "docs_in_db": docs_in_db
+    }
 
 async def chat_gemini(message: str, mode: str):
     global chat_session, gemini_lock
