@@ -1,0 +1,14 @@
+[Unit]
+Description=Asistente Virtual FastAPI
+After=network.target
+
+[Service]
+Type=simple
+Environment="CUDA_VISIBLE_DEVICES="
+WorkingDirectory=/home/eespinozajimenez/Asistente_Virtual
+ExecStart=/home/eespinozajimenez/Asistente_Virtual/.venv/bin/uvicorn api:app --host 0.0.0.0 --port 18000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
