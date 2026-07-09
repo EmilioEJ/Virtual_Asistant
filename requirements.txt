@@ -6,7 +6,7 @@ transformers
 torch
 soundfile
 scipy
-opencv-python
+opencv-python<5
 websockets
 fastapi
 uvicorn
