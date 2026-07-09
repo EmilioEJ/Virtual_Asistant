@@ -2,7 +2,7 @@ import pymupdf4llm
 from langchain_text_splitters import MarkdownTextSplitter
 from sentence_transformers import SentenceTransformer
 import chromadb
-import os
+import os 
 
 def extract_pdf_text(path: str) -> str:
     print(f"📄 Extrayendo texto y tablas en formato Markdown del PDF: {path}...")
