@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 Environment="CUDA_VISIBLE_DEVICES="
 WorkingDirectory=/home/eespinozajimenez/Asistente_Virtual
-ExecStart=/home/eespinozajimenez/Asistente_Virtual/.venv/bin/uvicorn api:app --host 0.0.0.0 --port 18000
+ExecStart=/home/eespinozajimenez/Asistente_Virtual/.venv/bin/uvicorn api:app --host 0.0.0.0 --port 18000 --ssl-keyfile /home/eespinozajimenez/Asistente_Virtual/key.pem --ssl-certfile /home/eespinozajimenez/Asistente_Virtual/cert.pem
 Restart=always
 RestartSec=5
 
