@@ -33,7 +33,7 @@ const loader = new GLTFLoader();
 loader.register((parser) => new VRMLoaderPlugin(parser));
 
 loader.load(
-    'models/AsistenteTI.vrm?v=' + Date.now(), // Cache-buster para que siempre cargue el avatar más nuevo
+    '/static/models/AsistenteTI.vrm?v=' + Date.now(), // Cache-buster para que siempre cargue el avatar más nuevo
     (gltf) => {
         const vrm = gltf.userData.vrm;
         // IMPORTANTE: Se eliminó removeUnnecessaryJoints porque rompe la malla (mesh)

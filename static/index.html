@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ARIA - Asistente Universitario</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/static/style.css">
     
     <!-- Three.js y VRM para el Avatar -->
     <!-- Async script loading for Three.js modern versions -->
@@ -24,12 +24,15 @@
         <!-- Panel Izquierdo: Chat -->
         <main class="chat-panel">
             <header>
-                <div class="logo-area" style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="logo-area" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <div class="status-dot"></div>
                         <h1 style="margin: 0;">Asistente <span>Virtual</span></h1>
                     </div>
-                    <a href="/admin.html" style="color: var(--primary); font-size: 0.85rem; text-decoration: none; padding: 5px 10px; background: rgba(163, 112, 240, 0.1); border-radius: 8px; border: 1px solid var(--primary);">⚙️ Admin RAG</a>
+                    <div style="display: flex; gap: 10px;">
+                        <a href="/admin.html" style="color: var(--primary); font-size: 0.85rem; text-decoration: none; padding: 5px 10px; background: rgba(163, 112, 240, 0.1); border-radius: 8px; border: 1px solid var(--primary);">⚙️ Admin RAG</a>
+                        <button onclick="logout()" style="cursor: pointer; color: #ef4444; font-size: 0.85rem; padding: 5px 10px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid #ef4444;">Cerrar Sesión</button>
+                    </div>
                 </div>
                 <p class="subtitle">Ingeniería en Tecnologías de la Información</p>
             </header>
@@ -93,6 +96,16 @@
         </aside>
     </div>
 
-    <script type="module" src="script.js"></script>
+    <script>
+        async function logout() {
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+                window.location.href = '/login';
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    </script>
+    <script type="module" src="/static/script.js"></script>
 </body>
 </html>

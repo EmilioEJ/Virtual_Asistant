@@ -7,11 +7,14 @@ import fitz  # PyMuPDF
 from sentence_transformers import SentenceTransformer
 import chromadb
 from typing import List
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, UploadFile, File, BackgroundTasks
-from fastapi.responses import StreamingResponse
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, UploadFile, File, BackgroundTasks, Request, Response, Depends
+from fastapi.responses import StreamingResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from dotenv import load_dotenv
+import sqlite3
+import uuid
+from init_db import init_db, hash_password
 
 load_dotenv()
 
@@ -162,6 +165,12 @@ def init_openwebui():
 
 @app.on_event("startup")
 def startup_event():
+    # Inicializar la base de datos de usuarios
+    try:
+        init_db()
+    except Exception as e:
+        print(f"Error inicializando base de datos de usuarios: {e}")
+
     global embedder, chroma_collection
     try:
         # Inicializar base de datos vectorial (RAG)
@@ -189,11 +198,68 @@ def startup_event():
         print(f"❌ Error iniciando el backend: {e}")
 
 # ============================================================
+# Auth (Login/Sessiones)
+# ============================================================
+def get_current_user(request: Request):
+    session_token = request.cookies.get("session_token")
+    if not session_token:
+        raise HTTPException(status_code=401, detail="No autenticado")
+    
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT username FROM sessions WHERE session_token = ?", (session_token,))
+    row = cursor.fetchone()
+    conn.close()
+    
+    if not row:
+        raise HTTPException(status_code=401, detail="Sesión inválida")
+    return row[0]
+
+def verify_page_auth(request: Request):
+    session_token = request.cookies.get("session_token")
+    if not session_token:
+        return False
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT username FROM sessions WHERE session_token = ?", (session_token,))
+    row = cursor.fetchone()
+    conn.close()
+    return bool(row)
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+@app.post("/api/login")
+async def api_login(data: LoginRequest, response: Response):
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT password_hash FROM users WHERE username = ?", (data.username,))
+    row = cursor.fetchone()
+    
+    if not row or row[0] != hash_password(data.password):
+        conn.close()
+        raise HTTPException(status_code=401, detail="Credenciales incorrectas")
+        
+    session_token = str(uuid.uuid4())
+    cursor.execute("INSERT INTO sessions (session_token, username) VALUES (?, ?)", (session_token, data.username))
+    conn.commit()
+    conn.close()
+    
+    response.set_cookie(key="session_token", value=session_token, httponly=True)
+    return {"message": "Login exitoso"}
+
+@app.post("/api/logout")
+async def api_logout(response: Response):
+    response.delete_cookie("session_token")
+    return {"message": "Logout exitoso"}
+
+# ============================================================
 # Endpoint de Chat
 # ============================================================
 
 @app.post("/api/chat")
-async def chat_endpoint(data: MessageInput):
+async def chat_endpoint(data: MessageInput, user: str = Depends(get_current_user)):
     try:
         if AI_PROVIDER in ("siliconflow", "groq", "openwebui"):
             return await chat_siliconflow(data.message, data.mode)
@@ -211,7 +277,7 @@ async def chat_endpoint(data: MessageInput):
 # Endpoint de Voz a Texto (Whisper STT)
 # ============================================================
 @app.post("/api/stt")
-async def stt_endpoint(audio: UploadFile = File(...)):
+async def stt_endpoint(audio: UploadFile = File(...), user: str = Depends(get_current_user)):
     from openai import OpenAI
     groq_api_key = os.getenv("GROQ_API_KEY")
     if not groq_api_key:
@@ -261,7 +327,7 @@ async def background_process_docs(file_paths: List[str]):
     _reload_rag_collection()
 
 @app.post("/api/admin/upload_docs")
-async def upload_docs(background_tasks: BackgroundTasks, files: List[UploadFile] = File(...)):
+async def upload_docs(background_tasks: BackgroundTasks, files: List[UploadFile] = File(...), user: str = Depends(get_current_user)):
     # Rechazar si ya hay un proceso en curso
     status = get_rag_status()
     if status.get("is_processing"):
@@ -287,7 +353,7 @@ async def upload_docs(background_tasks: BackgroundTasks, files: List[UploadFile]
     return {"message": f"Procesamiento de {len(file_paths)} archivos iniciado en background."}
 
 @app.get("/api/admin/rag_status")
-async def rag_status_endpoint():
+async def rag_status_endpoint(user: str = Depends(get_current_user)):
     status = get_rag_status()
     # Retorna el estado global del progreso
     # Calculamos también el número de documentos actuales en DB
@@ -468,6 +534,26 @@ async def vision_worker_task():
         print("Error en OpenCV:", e)
 
 # ============================================================
-# Frontend estático
+# Frontend estático y Rutas de Página
 # ============================================================
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+
+@app.get("/")
+async def root_page(request: Request):
+    if not verify_page_auth(request):
+        return RedirectResponse(url="/login")
+    return FileResponse("static/index.html")
+
+@app.get("/admin.html")
+async def admin_html_page(request: Request):
+    if not verify_page_auth(request):
+        return RedirectResponse(url="/login")
+    return FileResponse("static/admin.html")
+
+@app.get("/login")
+async def login_html_page(request: Request):
+    # Si ya está autenticado, redirigir a inicio
+    if verify_page_auth(request):
+        return RedirectResponse(url="/")
+    return FileResponse("static/login.html")
+
+app.mount("/static", StaticFiles(directory="static"), name="static")

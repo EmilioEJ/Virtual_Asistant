@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aria - Iniciar Sesión</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: var(--bg-color);
+            background-image: radial-gradient(circle at top right, rgba(163, 112, 240, 0.15), transparent 40%),
+                              radial-gradient(circle at bottom left, rgba(78, 205, 196, 0.1), transparent 40%);
+            font-family: 'Outfit', sans-serif;
+            color: var(--text-main);
+        }
+        
+        .login-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .login-container h1 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .login-container p {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.2);
+            color: white;
+            font-size: 1rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(163, 112, 240, 0.3);
+        }
+
+        .btn-login {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: opacity 0.3s, transform 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            opacity: 0.9;
+        }
+
+        .btn-login:active {
+            transform: scale(0.98);
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-top: 15px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h1>Aria Security</h1>
+        <p>Ingresa tus credenciales para continuar</p>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Usuario</label>
+                <input type="text" id="username" name="username" required autocomplete="username">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password">
+            </div>
+            
+            <button type="submit" class="btn-login" id="loginBtn">Iniciar Sesión</button>
+            <div id="errorMsg" class="error-message">Credenciales incorrectas. Inténtalo de nuevo.</div>
+        </form>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const errorMsg = document.getElementById('errorMsg');
+        const loginBtn = document.getElementById('loginBtn');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.style.display = 'none';
+            loginBtn.textContent = 'Verificando...';
+            loginBtn.disabled = true;
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (response.ok) {
+                    // Redirect to the main app
+                    window.location.href = '/';
+                } else {
+                    const data = await response.json();
+                    errorMsg.textContent = data.detail || 'Credenciales incorrectas.';
+                    errorMsg.style.display = 'block';
+                    loginBtn.textContent = 'Iniciar Sesión';
+                    loginBtn.disabled = false;
+                }
+            } catch (error) {
+                errorMsg.textContent = 'Error de conexión con el servidor.';
+                errorMsg.style.display = 'block';
+                loginBtn.textContent = 'Iniciar Sesión';
+                loginBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
