@@ -566,8 +566,51 @@ const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws`);
 let hasWelcomed = false;
 let wasInterrupted = false;
 
+// ==========================================
+// 4. Captura de Video para Visión Artificial en Backend
+// ==========================================
+let videoElement = document.createElement('video');
+videoElement.autoplay = true;
+videoElement.style.display = 'none';
+document.body.appendChild(videoElement);
+
+let canvasElement = document.createElement('canvas');
+canvasElement.style.display = 'none';
+document.body.appendChild(canvasElement);
+let ctx = canvasElement.getContext('2d');
+
+let isCameraActive = false;
+
+async function startCameraForVision() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        videoElement.srcObject = stream;
+        
+        videoElement.onloadedmetadata = () => {
+            canvasElement.width = 320; // Resolución fija baja para no saturar la red
+            canvasElement.height = 240;
+            isCameraActive = true;
+            
+            // Enviar un frame al backend cada segundo (1000ms)
+            setInterval(() => {
+                if (ws.readyState === WebSocket.OPEN && isCameraActive) {
+                    ctx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+                    // Obtener base64 JPG
+                    const base64Frame = canvasElement.toDataURL('image/jpeg', 0.5);
+                    ws.send(base64Frame);
+                }
+            }, 1000);
+        };
+    } catch (err) {
+        console.error("Error al acceder a la cámara para visión:", err);
+        const sysStatus = document.querySelector('.camera-status');
+        if (sysStatus) sysStatus.textContent = 'Permiso de cámara denegado';
+    }
+}
+
 ws.onopen = () => {
-    console.log("Conectado al Ojo (Visión Artificial de OpenCV)");
+    console.log("Conectado al Ojo (Visión Artificial de OpenCV en servidor)");
+    startCameraForVision();
 };
 
 ws.onmessage = (event) => {

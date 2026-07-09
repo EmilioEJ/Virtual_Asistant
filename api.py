@@ -2,6 +2,8 @@ import io
 import os
 import asyncio
 import cv2
+import numpy as np
+import base64
 import edge_tts
 import fitz  # PyMuPDF
 from sentence_transformers import SentenceTransformer
@@ -193,7 +195,7 @@ def startup_event():
             init_gemini()
 
         # Iniciar visión artificial en segundo plano
-        asyncio.create_task(vision_worker_task())
+        # (Ya no se usa tarea local, se procesa en el WebSocket)
     except Exception as e:
         print(f"❌ Error iniciando el backend: {e}")
 
@@ -485,53 +487,52 @@ async def debug_rag(q: str):
 # WebSocket (Visión Artificial)
 # ============================================================
 
+# Cargar clasificador de rostros globalmente
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     ws_clients.add(websocket)
+    person_present = False
+    present_frames = 0
+    missing_frames = 0
+    
     try:
         while True:
-            await websocket.receive_text()
+            data = await websocket.receive_text()
+            if data.startswith("data:image"):
+                base64_data = data.split(",")[1]
+                img_data = base64.b64decode(base64_data)
+                np_arr = np.frombuffer(img_data, np.uint8)
+                frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+                
+                if frame is not None:
+                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+                    
+                    if len(faces) > 0:
+                        present_frames += 1
+                        missing_frames = 0
+                        if present_frames > 1 and not person_present:
+                            person_present = True
+                            print("--> OpenCV: ¡Rostro Detectado desde WebSocket!")
+                            await websocket.send_text("person_arrived")
+                    else:
+                        present_frames = 0
+                        missing_frames += 1
+                        if missing_frames > 3 and person_present:
+                            person_present = False
+                            print("--> OpenCV: ¡Persona retirada de cámara WebSocket!")
+                            await websocket.send_text("person_left")
     except WebSocketDisconnect:
         ws_clients.remove(websocket)
-
-async def vision_worker_task():
-    try:
-        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-        cap = cv2.VideoCapture(0)
-        print("📷 OpenCV Encendido. Escaneando la cámara web...")
-
-        person_present = False
-        present_frames = 0
-        missing_frames = 0
-
-        while True:
-            await asyncio.sleep(0.1)  # 10 FPS
-            ret, frame = cap.read()
-            if not ret:
-                continue
-
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-
-            if len(faces) > 0:
-                present_frames += 1
-                missing_frames = 0
-                if present_frames > 5 and not person_present:
-                    person_present = True
-                    print("--> OpenCV: ¡Rostro Detectado!")
-                    for client in ws_clients:
-                        await client.send_text("person_arrived")
-            else:
-                present_frames = 0
-                missing_frames += 1
-                if missing_frames > 60 and person_present:
-                    person_present = False
-                    print("--> OpenCV: ¡Persona retirada de cámara!")
-                    for client in ws_clients:
-                        await client.send_text("person_left")
     except Exception as e:
-        print("Error en OpenCV:", e)
+        print(f"Error procesando frame base64 WebSocket: {e}")
+        try:
+            ws_clients.remove(websocket)
+        except:
+            pass
 
 # ============================================================
 # Frontend estático y Rutas de Página
