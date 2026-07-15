@@ -454,8 +454,8 @@ async def tts_endpoint(data: MessageInput):
     if not elevenlabs_api_key:
         raise HTTPException(status_code=500, detail="Falta ELEVENLABS_API_KEY en .env")
 
-    # Voz: Valeria (Español Neutral / Latinoamericano)
-    voice_id = "nfyTTmgO0f6GV9CKrMWL"
+    # Voz: Jessica (Tono Juguetón, Brillante y Dulce)
+    voice_id = "cgSgspJ2msm6clMCkdW9"
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream"
     
     headers = {
