@@ -374,8 +374,8 @@ async def chat_gemini(message: str, mode: str):
         raise HTTPException(status_code=500, detail="El modelo Gemini no está inicializado.")
     
     prompt = message
-    if mode == "conversational":
-        prompt += "\n\n(Regla del sistema para este mensaje: Responde de manera MUY BREVE y conversacional, ya que el usuario está usando la entrada por voz)."
+    # Aplicar la misma regla de brevedad para ambos modos
+    prompt += "\n\n(Regla del sistema para este mensaje: Responde de manera MUY BREVE, concisa y directa. No uses párrafos largos ni listas detalladas)."
 
     async with gemini_lock:
         response = await asyncio.to_thread(chat_session.send_message, prompt)
@@ -422,8 +422,8 @@ async def chat_siliconflow(message: str, mode: str):
     if context_text:
         user_message_with_context += context_text
 
-    if mode == "conversational":
-        user_message_with_context += "\n\n(Regla del sistema: El usuario te está hablando por micrófono. Tus respuestas DEBEN SER MUY CORTAS, concisas y directas. No uses párrafos largos ni listas detalladas. Mantén una charla natural y fluida.)"
+    # Aplicar el mismo sistema de respuestas breves para el chat y conversacional
+    user_message_with_context += "\n\n(Regla del sistema: Tus respuestas DEBEN SER MUY CORTAS, concisas y directas. No uses párrafos largos ni listas detalladas. Mantén una charla natural y fluida.)"
 
     temp_messages.append({"role": "user", "content": user_message_with_context})
 
