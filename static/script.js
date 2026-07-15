@@ -126,10 +126,9 @@ function animate() {
         const offsetY = 0.55; // Nivel de la cara en la ventana (ajusta si es necesario)
 
         if (head) {
-            // Seguimiento del cursor con la cabeza (Lerp suave) + balanceo natural
-            // Se usa +mouseX para corregir el eje invertido izquierda-derecha
-            const targetHeadY = Math.sin(time * 0.7) * 0.01 + (mouseX - offsetX) * 0.5;
-            const targetHeadX = -(mouseY - offsetY) * 0.3; // Invertido para mirar arriba/abajo correctamente
+            // Mirar al frente (sin seguimiento del ratón) + balanceo natural
+            const targetHeadY = Math.sin(time * 0.7) * 0.01;
+            const targetHeadX = 0;
             
             head.rotation.y += (targetHeadY - head.rotation.y) * 0.1;
             head.rotation.x += (targetHeadX - head.rotation.x) * 0.1;
@@ -140,9 +139,9 @@ function animate() {
         const leftEye = currentVrm.humanoid.getNormalizedBoneNode('leftEye');
         const rightEye = currentVrm.humanoid.getNormalizedBoneNode('rightEye');
         if (leftEye && rightEye) {
-            // Movimiento muy sutil para que las pupilas no se salgan del globo ocular
-            const targetEyeY = (mouseX - offsetX) * 0.15; // Corregido izquierda-derecha y limitado rango
-            const targetEyeX = -(mouseY - offsetY) * 0.15; // Limitado rango arriba-abajo
+            // Mirar al frente (sin seguimiento del ratón)
+            const targetEyeY = 0;
+            const targetEyeX = 0;
             
             leftEye.rotation.y += (targetEyeY - leftEye.rotation.y) * 0.2;
             leftEye.rotation.x += (targetEyeX - leftEye.rotation.x) * 0.2;
