@@ -11,3 +11,10 @@ include/
 # Caché de Python
 __pycache__/
 *.pyc
+
+# Bases de datos y archivos generados
+chroma_db/
+*.db
+*.sqlite3
+cert.pem
+key.pem
