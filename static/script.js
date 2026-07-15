@@ -245,7 +245,7 @@ function removeLoading() {
     if (loadingDiv) loadingDiv.remove();
 }
 
-let currentMode = "chat"; // "chat" o "conversational"
+let currentMode = "conversational"; // "chat" o "conversational"
 
 async function sendMessage(textToSend = null) {
     const text = textToSend !== null ? textToSend : userInput.value.trim();

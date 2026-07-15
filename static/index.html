@@ -38,11 +38,11 @@
             </header>
             
             <nav class="mode-selector">
-                <button id="modeChatBtn" class="mode-btn active">💬 Chatear</button>
-                <button id="modeConvBtn" class="mode-btn">🎙️ Conversar</button>
+                <button id="modeChatBtn" class="mode-btn">💬 Chatear</button>
+                <button id="modeConvBtn" class="mode-btn active">🎙️ Conversar</button>
             </nav>
 
-            <div id="chatModeContainer" class="mode-container active-mode">
+            <div id="chatModeContainer" class="mode-container hidden-mode">
                 <div class="chat-box" id="chatBox">
                     <!-- Los mensajes del chat irán aquí -->
                 </div>
@@ -61,7 +61,7 @@
                 </div>
             </div>
 
-            <div id="convModeContainer" class="mode-container hidden-mode">
+            <div id="convModeContainer" class="mode-container active-mode">
                 <div class="conversational-ui">
                     <div class="conv-status" id="convStatus">Toca el micrófono para hablar con Aria</div>
                     <button id="bigMicBtn" class="big-mic-btn" title="Iniciar Conversación">
@@ -73,6 +73,16 @@
                     <div class="conv-waves" id="convWaves">
                         <!-- Animación de ondas de voz se manejará por CSS -->
                         <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+
+                    <!-- Nube de Ideas / Sugerencias -->
+                    <div class="suggestion-cloud">
+                        <p style="width: 100%; text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 5px;">Preguntas sugeridas:</p>
+                        <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Cuánto dura la carrera y qué título obtengo?</button>
+                        <button class="suggestion-bubble" onclick="askSuggestion(this)">¿En qué modalidades puedo estudiar?</button>
+                        <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Qué materias veré o cómo es la malla curricular?</button>
+                        <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Dónde está ubicado el campus en Quito?</button>
+                        <button class="suggestion-bubble" onclick="askSuggestion(this)">¿En qué podré trabajar cuando me gradúe?</button>
                     </div>
                 </div>
             </div>
