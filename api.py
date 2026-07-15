@@ -178,7 +178,7 @@ def startup_event():
         # Inicializar base de datos vectorial (RAG)
         try:
             print("🧠 Inicializando RAG (Cargando Embedder y ChromaDB)...")
-            embedder = SentenceTransformer("all-MiniLM-L6-v2")
+            embedder = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
             chroma_client = chromadb.PersistentClient(path="./chroma_db")
             chroma_collection = chroma_client.get_collection(name="carrera_ti_indoamerica_collection")
             print(f"✅ RAG Inicializado. Fragmentos cargados: {chroma_collection.count()}")

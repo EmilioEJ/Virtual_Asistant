@@ -22,16 +22,16 @@ def build_index():
     # Chunking: Dividir el texto en fragmentos (Aumentado para que quepan tablas completas)
     print("✂️ Dividiendo documento Markdown en fragmentos (chunks)...")
     text_splitter = MarkdownTextSplitter(
-        chunk_size=2500,  # Bastante grande para mantener tablas enteras y unidas
-        chunk_overlap=400
+        chunk_size=1500,
+        chunk_overlap=300
     )
     chunks = text_splitter.split_text(text)
     print(f"✅ Se generaron {len(chunks)} fragmentos.")
 
     # Cargar modelo de Embeddings
     print("🧠 Cargando modelo de Embeddings (sentence-transformers)...")
-    # Usamos all-MiniLM-L6-v2, que es ultra rápido y funciona muy bien para inglés/español general
-    embedder = SentenceTransformer("all-MiniLM-L6-v2")
+    # Usamos paraphrase-multilingual-MiniLM-L12-v2, optimizado para español y más de 50 idiomas
+    embedder = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
 
     # Inicializar ChromaDB
     print("💾 Inicializando base de datos vectorial ChromaDB...")
