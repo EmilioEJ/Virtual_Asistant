@@ -76,13 +76,18 @@ header {
 
 .header-btn {
     font-size: 0.85rem;
-    padding: 5px 10px;
+    padding: 6px 12px;
     border-radius: 8px;
     cursor: pointer;
     text-decoration: none;
     font-family: inherit;
     font-weight: 600;
     transition: opacity 0.2s, transform 0.2s;
+    width: auto;
+    height: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .header-btn:hover {
@@ -255,6 +260,10 @@ h1 span {
     white-space: normal;
     text-align: center;
     max-width: 280px;
+    width: auto;
+    height: auto;
+    display: inline-block;
+    line-height: 1.3;
 }
 
 .suggestion-bubble:nth-child(even) {
