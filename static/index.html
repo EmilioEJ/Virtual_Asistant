@@ -24,14 +24,14 @@
         <!-- Panel Izquierdo: Chat -->
         <main class="chat-panel">
             <header>
-                <div class="logo-area" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="logo-area">
+                    <div class="logo-title-group">
                         <div class="status-dot"></div>
                         <h1 style="margin: 0;">Asistente <span>Virtual</span></h1>
                     </div>
-                    <div style="display: flex; gap: 10px;">
-                        <a href="/admin.html" style="color: var(--primary); font-size: 0.85rem; text-decoration: none; padding: 5px 10px; background: rgba(163, 112, 240, 0.1); border-radius: 8px; border: 1px solid var(--primary);">⚙️ Admin RAG</a>
-                        <button onclick="logout()" style="cursor: pointer; color: #ef4444; font-size: 0.85rem; padding: 5px 10px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid #ef4444;">Cerrar Sesión</button>
+                    <div class="header-actions">
+                        <a href="/admin.html" class="header-btn header-btn-primary">⚙️ Admin RAG</a>
+                        <button onclick="logout()" class="header-btn header-btn-danger">Cerrar Sesión</button>
                     </div>
                 </div>
                 <p class="subtitle">Ingeniería en Tecnologías de la Información</p>
@@ -75,15 +75,7 @@
                         <span></span><span></span><span></span><span></span><span></span>
                     </div>
 
-                    <!-- Nube de Ideas / Sugerencias -->
-                    <div class="suggestion-cloud">
-                        <p style="width: 100%; text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 5px;">Preguntas sugeridas:</p>
-                        <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Cuánto dura la carrera y qué título obtengo?</button>
-                        <button class="suggestion-bubble" onclick="askSuggestion(this)">¿En qué modalidades puedo estudiar?</button>
-                        <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Qué materias veré o cómo es la malla curricular?</button>
-                        <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Dónde está ubicado el campus en Quito?</button>
-                        <button class="suggestion-bubble" onclick="askSuggestion(this)">¿En qué podré trabajar cuando me gradúe?</button>
-                    </div>
+                    <!-- Nube eliminada de aquí para moverla al panel derecho -->
                 </div>
             </div>
         </main>
@@ -102,6 +94,16 @@
                     <span class="hud-label">ESTADO DE CÁMARA</span>
                     <span class="hud-value camera-status">ESPERANDO FASE 2...</span>
                 </div>
+            </div>
+
+            <!-- Nube de Ideas / Sugerencias para el Avatar -->
+            <div class="suggestion-cloud">
+                <p class="suggestion-title">Preguntas sugeridas:</p>
+                <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Cuánto dura la carrera y qué título obtengo?</button>
+                <button class="suggestion-bubble" onclick="askSuggestion(this)">¿En qué modalidades puedo estudiar?</button>
+                <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Qué materias veré o cómo es la malla curricular?</button>
+                <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Dónde está ubicado el campus en Quito?</button>
+                <button class="suggestion-bubble" onclick="askSuggestion(this)">¿En qué podré trabajar cuando me gradúe?</button>
             </div>
         </aside>
     </div>

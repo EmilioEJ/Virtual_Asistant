@@ -55,8 +55,54 @@ header {
 
 .logo-area {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: space-between;
     gap: 12px;
+}
+
+.logo-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.header-btn {
+    font-size: 0.85rem;
+    padding: 5px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: inherit;
+    font-weight: 600;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.header-btn:hover {
+    opacity: 0.8;
+}
+
+.header-btn:active {
+    transform: scale(0.95);
+}
+
+.header-btn-primary {
+    color: var(--primary);
+    background: rgba(79, 138, 255, 0.1);
+    border: 1px solid var(--primary);
+}
+
+.header-btn-danger {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid #ef4444;
 }
 
 .status-dot {
@@ -171,18 +217,30 @@ h1 span {
    NUBE DE SUGERENCIAS (Burbujas Flotantes)
    ========================================= */
 .suggestion-cloud {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 12px;
-    margin-top: 30px;
-    width: 100%;
-    max-width: 500px;
+    width: 90%;
+    max-width: 600px;
     z-index: 10;
 }
 
+.suggestion-title {
+    width: 100%;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
 .suggestion-bubble {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(20, 24, 38, 0.7);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     border: 1px solid var(--glass-border);
@@ -194,6 +252,9 @@ h1 span {
     transition: all 0.3s ease;
     animation: floating 4s ease-in-out infinite;
     font-family: 'Outfit', sans-serif;
+    white-space: normal;
+    text-align: center;
+    max-width: 280px;
 }
 
 .suggestion-bubble:nth-child(even) {
