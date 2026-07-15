@@ -1,0 +1,49 @@
+# Despliegue de Aria en el VPS (Coolify + Traefik).
+# - web:           backend FastAPI, publicado en aria.indoamericatech.com vía Traefik.
+# - ollama-tunnel: sidecar autossh que expone el Ollama del GPU (LabITI) como
+#                  http://aria-ollama-tunnel:11434 dentro de la red 'internal'.
+services:
+  ollama-tunnel:
+    build:
+      context: ./tunnel
+    container_name: aria-ollama-tunnel
+    restart: unless-stopped
+    command: ["-L", "0.0.0.0:11434:127.0.0.1:11434", "jmoralesjativa@ssh-labiti.indoamericatech.com"]
+    volumes:
+      - /home/joel-superadmin/.ssh/gpu_tunnel:/key:ro
+    networks:
+      - internal
+
+  web:
+    build:
+      context: .
+    container_name: aria-web
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - ollama-tunnel
+    volumes:
+      - aria_chroma:/app/chroma_db   # índice RAG persistente entre redeploys
+    networks:
+      - internal
+      - coolify
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=coolify
+      - traefik.http.routers.http-aria.entryPoints=http
+      - "traefik.http.routers.http-aria.rule=Host(`${DOMAIN}`)"
+      - traefik.http.routers.https-aria.entryPoints=https
+      - "traefik.http.routers.https-aria.rule=Host(`${DOMAIN}`)"
+      - traefik.http.routers.https-aria.tls=true
+      - traefik.http.routers.https-aria.tls.certresolver=letsencrypt
+      - traefik.http.services.aria.loadbalancer.server.port=8000
+
+volumes:
+  aria_chroma:
+
+networks:
+  internal:
+    driver: bridge
+  coolify:
+    external: true
