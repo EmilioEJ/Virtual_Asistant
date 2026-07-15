@@ -446,20 +446,44 @@ async def chat_siliconflow(message: str, mode: str):
 # Endpoint TTS
 # ============================================================
 
+import httpx
+
 @app.post("/api/tts")
 async def tts_endpoint(data: MessageInput):
-    VOICE_MODEL = "es-MX-DaliaNeural"
-    try:
-        communicate = edge_tts.Communicate(data.message, VOICE_MODEL)
-        audio_data = b""
-        async for chunk in communicate.stream():
-            if chunk["type"] == "audio":
-                audio_data += chunk["data"]
-        buf = io.BytesIO(audio_data)
-        buf.seek(0)
-        return StreamingResponse(buf, media_type="audio/mpeg")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    elevenlabs_api_key = os.getenv("ELEVENLABS_API_KEY")
+    if not elevenlabs_api_key:
+        raise HTTPException(status_code=500, detail="Falta ELEVENLABS_API_KEY en .env")
+
+    # Voz: Valeria (Español Neutral / Latinoamericano)
+    voice_id = "nfyTTmgO0f6GV9CKrMWL"
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream"
+    
+    headers = {
+        "Accept": "audio/mpeg",
+        "Content-Type": "application/json",
+        "xi-api-key": elevenlabs_api_key
+    }
+    
+    payload = {
+        "text": data.message,
+        "model_id": "eleven_multilingual_v2",
+        "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.75
+        }
+    }
+    
+    async def stream_audio():
+        async with httpx.AsyncClient() as client:
+            async with client.stream("POST", url, json=payload, headers=headers) as response:
+                if response.status_code != 200:
+                    error_detail = await response.aread()
+                    print(f"Error ElevenLabs: {error_detail}")
+                    return
+                async for chunk in response.aiter_bytes(chunk_size=1024):
+                    yield chunk
+
+    return StreamingResponse(stream_audio(), media_type="audio/mpeg")
 
 # ============================================================
 # Debug Endpoints (Para diagnosticar problemas de RAG)
