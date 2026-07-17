@@ -33,7 +33,7 @@ const loader = new GLTFLoader();
 loader.register((parser) => new VRMLoaderPlugin(parser));
 
 loader.load(
-    '/static/models/ARIA.vrm?v=' + Date.now(), // Cache-buster para que siempre cargue el avatar más nuevo
+    '/static/models/ARIA2.0.vrm?v=' + Date.now(), // Cache-buster para que siempre cargue el avatar más nuevo
     (gltf) => {
         const vrm = gltf.userData.vrm;
         // IMPORTANTE: Se eliminó removeUnnecessaryJoints porque rompe la malla (mesh)
@@ -97,7 +97,7 @@ loader.load(
     },
     (progress) => console.log('Cargando Avatar...', Math.round(100.0 * (progress.loaded / progress.total)), '%'),
     (error) => {
-        console.error('No se encontró "models/ARIA.vrm". Ponlo en su lugar para cargar el avatar 3D.', error);
+        console.error('No se encontró "models/ARIA2.0.vrm". Ponlo en su lugar para cargar el avatar 3D.', error);
         document.querySelector('.camera-status').textContent = "ERROR: AVATAR NO ENCONTRADO";
         document.querySelector('.camera-status').style.color = "red";
     }
@@ -683,3 +683,49 @@ ws.onerror = () => {
     const sysStatus = document.querySelector('.camera-status');
     if (sysStatus) sysStatus.textContent = 'Error de conexión de cámara';
 };
+
+// Función para las preguntas sugeridas en la interfaz
+window.askSuggestion = function(btn) {
+    const text = btn.innerText;
+    const userInput = document.getElementById('userInput');
+    userInput.value = text;
+    
+    // Forzar el modo chat para que la pregunta sea escrita y no genere confusión
+    const modeChatBtn = document.getElementById('modeChatBtn');
+    if (modeChatBtn && !modeChatBtn.classList.contains('active')) {
+        modeChatBtn.click();
+    }
+    
+    // Enviar el mensaje usando el botón de enviar
+    const sendBtn = document.getElementById('sendBtn');
+    if (sendBtn) sendBtn.click();
+};
+
+// Carrusel automático infinito para las sugerencias
+document.addEventListener('DOMContentLoaded', () => {
+    const cloud = document.querySelector('.suggestion-cloud');
+    if (cloud) {
+        let isHovered = false;
+        // Pausar al pasar el ratón para poder leer y dar clic
+        cloud.addEventListener('mouseenter', () => isHovered = true);
+        cloud.addEventListener('mouseleave', () => isHovered = false);
+        
+        // Clonar las burbujas para lograr un loop infinito transparente
+        const bubbles = Array.from(cloud.querySelectorAll('.suggestion-bubble'));
+        bubbles.forEach(bubble => {
+            const clone = bubble.cloneNode(true);
+            cloud.appendChild(clone);
+        });
+
+        // Mover 1 pixel cada 30ms (ritmo legible)
+        setInterval(() => {
+            if (!isHovered) {
+                cloud.scrollLeft += 1;
+                // Si el scroll supera la mitad exacta (el contenido original), retrocedemos al inicio
+                if (cloud.scrollLeft >= cloud.scrollWidth / 2) {
+                    cloud.scrollLeft -= cloud.scrollWidth / 2;
+                }
+            }
+        }, 30);
+    }
+});

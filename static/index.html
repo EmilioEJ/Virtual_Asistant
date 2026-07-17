@@ -30,7 +30,7 @@
                         <h1 style="margin: 0;">Asistente <span>Virtual</span></h1>
                     </div>
                     <div class="header-actions">
-                        <a href="/admin.html" class="header-btn header-btn-primary">⚙️ Admin RAG</a>
+                        <a href="/admin.html" class="header-btn header-btn-primary">Admin RAG</a>
                         <button onclick="logout()" class="header-btn header-btn-danger">Cerrar Sesión</button>
                     </div>
                 </div>
@@ -38,8 +38,8 @@
             </header>
             
             <nav class="mode-selector">
-                <button id="modeChatBtn" class="mode-btn">💬 Chatear</button>
-                <button id="modeConvBtn" class="mode-btn active">🎙️ Conversar</button>
+                <button id="modeChatBtn" class="mode-btn">Chatear</button>
+                <button id="modeConvBtn" class="mode-btn active">Conversar</button>
             </nav>
 
             <div id="chatModeContainer" class="mode-container hidden-mode">
@@ -97,13 +97,18 @@
             </div>
 
             <!-- Nube de Ideas / Sugerencias para el Avatar -->
-            <div class="suggestion-cloud">
+            <div class="suggestion-wrapper">
                 <p class="suggestion-title">Preguntas sugeridas:</p>
-                <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Cuánto dura la carrera y qué título obtengo?</button>
-                <button class="suggestion-bubble" onclick="askSuggestion(this)">¿En qué modalidades puedo estudiar?</button>
-                <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Qué materias veré o cómo es la malla curricular?</button>
-                <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Dónde está ubicado el campus en Quito?</button>
-                <button class="suggestion-bubble" onclick="askSuggestion(this)">¿En qué podré trabajar cuando me gradúe?</button>
+                <div class="suggestion-cloud">
+                    <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Cuánto dura la carrera y qué título obtengo?</button>
+                    <button class="suggestion-bubble" onclick="askSuggestion(this)">¿En qué modalidades puedo estudiar?</button>
+                    <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Qué materias veré o cómo es la malla curricular?</button>
+                    <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Dónde está ubicado el campus en Quito?</button>
+                    <button class="suggestion-bubble" onclick="askSuggestion(this)">¿En qué podré trabajar cuando me gradúe?</button>
+                    <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Qué becas o ayudas económicas ofrece la universidad?</button>
+                    <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Cuáles son los requisitos de admisión?</button>
+                    <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Puedo hacer intercambios estudiantiles en esta carrera?</button>
+                </div>
             </div>
         </aside>
     </div>
