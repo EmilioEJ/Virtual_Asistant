@@ -53,12 +53,9 @@ header {
     border-bottom: 1px solid var(--glass-border);
 }
 
-.logo-area {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    flex-direction: column;
+    gap: 15px;
 }
 
 .logo-title-group {
@@ -69,9 +66,10 @@ header {
 
 .header-actions {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     align-items: center;
     flex-wrap: wrap;
+    margin-top: 20px;
 }
 
 .header-btn {
@@ -226,9 +224,12 @@ h1 span {
     bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
-    width: 95%;
-    max-width: 900px;
+    width: 96%;
+    max-width: 100%;
     z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Alinear título a la izquierda */
 }
 
 .suggestion-cloud {
@@ -266,6 +267,7 @@ h1 span {
     font-size: 1.1rem;
     font-weight: 600;
     margin-bottom: 15px;
+    margin-left: 10px; /* Añadido para que no pegue al borde */
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
