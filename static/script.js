@@ -33,7 +33,7 @@ const loader = new GLTFLoader();
 loader.register((parser) => new VRMLoaderPlugin(parser));
 
 loader.load(
-    '/static/models/AsistenteTI.vrm?v=' + Date.now(), // Cache-buster para que siempre cargue el avatar más nuevo
+    '/static/models/ARIA.vrm?v=' + Date.now(), // Cache-buster para que siempre cargue el avatar más nuevo
     (gltf) => {
         const vrm = gltf.userData.vrm;
         // IMPORTANTE: Se eliminó removeUnnecessaryJoints porque rompe la malla (mesh)
@@ -51,29 +51,53 @@ loader.load(
         const rightLowerArm = vrm.humanoid.getNormalizedBoneNode('rightLowerArm');
 
         if (leftUpperArm && rightUpperArm) {
-            // Un ángulo ajustado para que los brazos bajen de forma natural
-            leftUpperArm.rotation.z = -1.1;
-            rightUpperArm.rotation.z = 1.1;
+            // Brazos descansando naturalmente pegados al cuerpo y un poco hacia adelante
+            leftUpperArm.rotation.set(0.1, -0.15, -1.25);
+            rightUpperArm.rotation.set(0.1, 0.15, 1.25);
         }
         if (leftLowerArm && rightLowerArm) {
-            leftLowerArm.rotation.x = -0.2;
-            rightLowerArm.rotation.x = -0.2;
+            // Codos flexionados ligeramente hacia el frente para no verse tiesos
+            leftLowerArm.rotation.set(-0.25, -0.1, 0);
+            rightLowerArm.rotation.set(-0.25, 0.1, 0);
         }
 
-        // --- POSTURA NATURAL DE LAS MANOS (Curvar dedos) ---
-        const fingers = ['Thumb', 'Index', 'Middle', 'Ring', 'Little'];
-        fingers.forEach(finger => {
-            ['Proximal', 'Intermediate'].forEach(joint => {
+        // --- POSTURA NATURAL DE LAS MANOS (Curvar dedos y relajar muñecas) ---
+        const leftHand = vrm.humanoid.getNormalizedBoneNode('leftHand');
+        const rightHand = vrm.humanoid.getNormalizedBoneNode('rightHand');
+        // Dejar las muñecas en 0 para evitar que las palmas miren hacia arriba
+        if (leftHand) leftHand.rotation.set(0, 0, 0);
+        if (rightHand) rightHand.rotation.set(0, 0, 0);
+
+        const fingers = ['Index', 'Middle', 'Ring', 'Little'];
+        fingers.forEach((finger, index) => {
+            // El dedo índice se curva menos, el meñique más
+            const curlAmount = 0.3 + (index * 0.05); 
+            
+            ['Proximal', 'Intermediate', 'Distal'].forEach(joint => {
                 const lFinger = vrm.humanoid.getNormalizedBoneNode(`left${finger}${joint}`);
                 const rFinger = vrm.humanoid.getNormalizedBoneNode(`right${finger}${joint}`);
-                if (lFinger) { lFinger.rotation.z = 0.1; lFinger.rotation.x = -0.05; }
-                if (rFinger) { rFinger.rotation.z = -0.1; rFinger.rotation.x = -0.05; }
+                
+                // Flexión principal (cerrar la mano ligeramente, signos invertidos para evitar hiperextensión)
+                if (lFinger) lFinger.rotation.z = -curlAmount;
+                if (rFinger) rFinger.rotation.z = curlAmount;
+                
+                // Evitar que estén muy separados (Splay)
+                if (lFinger) lFinger.rotation.x = 0;
+                if (rFinger) rFinger.rotation.x = 0;
             });
+        });
+
+        // Pulgar (Thumb)
+        ['Proximal', 'Intermediate', 'Distal'].forEach(joint => {
+            const lThumb = vrm.humanoid.getNormalizedBoneNode(`leftThumb${joint}`);
+            const rThumb = vrm.humanoid.getNormalizedBoneNode(`rightThumb${joint}`);
+            if (lThumb) { lThumb.rotation.y = -0.3; lThumb.rotation.z = -0.2; }
+            if (rThumb) { rThumb.rotation.y = 0.3; rThumb.rotation.z = 0.2; }
         });
     },
     (progress) => console.log('Cargando Avatar...', Math.round(100.0 * (progress.loaded / progress.total)), '%'),
     (error) => {
-        console.error('No se encontró "models/avatar.vrm". Ponlo en su lugar para cargar el avatar 3D.', error);
+        console.error('No se encontró "models/ARIA.vrm". Ponlo en su lugar para cargar el avatar 3D.', error);
         document.querySelector('.camera-status').textContent = "ERROR: AVATAR NO ENCONTRADO";
         document.querySelector('.camera-status').style.color = "red";
     }
@@ -173,26 +197,31 @@ function animate() {
         currentVrm.expressionManager.setValue('aa', currentMouthOpen * 0.85);
         currentVrm.expressionManager.setValue('ou', currentMouthOpen * 0.15); // Un toque de redondez
         
-        // 4. Movimiento Orgánico de Brazos (Siempre en reposo natural)
+        // 4. Movimiento Orgánico de Brazos y Ropa (SpringBones)
         const leftUpperArm = currentVrm.humanoid.getNormalizedBoneNode('leftUpperArm');
         const rightUpperArm = currentVrm.humanoid.getNormalizedBoneNode('rightUpperArm');
         const leftLowerArm = currentVrm.humanoid.getNormalizedBoneNode('leftLowerArm');
         const rightLowerArm = currentVrm.humanoid.getNormalizedBoneNode('rightLowerArm');
+        const hips = currentVrm.humanoid.getNormalizedBoneNode('hips');
+
+        if (hips) {
+            // Balanceo pélvico sutil para forzar a que las físicas (SpringBones) de la ropa se muevan continuamente
+            hips.rotation.y = Math.sin(time * 0.8) * 0.03;
+            hips.rotation.z = Math.cos(time * 0.6) * 0.015;
+            // (Eliminamos la modificación de hips.position.y para no arruinar la altura natural del VRM)
+        }
 
         if (leftUpperArm && rightUpperArm) {
-            // Posición: Reposo natural con leve respiración
-            leftUpperArm.rotation.x = 0;
-            rightUpperArm.rotation.x = 0;
-            leftUpperArm.rotation.z = -1.1 + Math.sin(time * 1.5) * 0.03;
-            rightUpperArm.rotation.z = 1.1 + Math.cos(time * 1.5) * 0.03;
+            // Respiración natural reflejada en hombros y brazos
+            leftUpperArm.rotation.x = 0.1 + Math.sin(time * 1.5) * 0.02;
+            rightUpperArm.rotation.x = 0.1 + Math.cos(time * 1.5) * 0.02;
+            leftUpperArm.rotation.z = -1.25 + Math.sin(time * 1.2) * 0.03;
+            rightUpperArm.rotation.z = 1.25 + Math.cos(time * 1.2) * 0.03;
             
             if (leftLowerArm && rightLowerArm) {
-                leftLowerArm.rotation.x = -0.2 + Math.sin(time * 1.2) * 0.05;
-                rightLowerArm.rotation.x = -0.2 + Math.cos(time * 1.2) * 0.05;
-                leftLowerArm.rotation.y = 0;
-                rightLowerArm.rotation.y = 0;
-                leftLowerArm.rotation.z = 0;
-                rightLowerArm.rotation.z = 0;
+                // Relajación de codos oscilante
+                leftLowerArm.rotation.x = -0.25 + Math.sin(time * 0.9) * 0.04;
+                rightLowerArm.rotation.x = -0.25 + Math.cos(time * 0.9) * 0.04;
             }
         }
     }
