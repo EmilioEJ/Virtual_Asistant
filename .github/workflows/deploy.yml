@@ -1,0 +1,27 @@
+name: Deploy Aria
+
+# CI/CD: en cada push a main, se conecta por SSH al VPS y redepliega
+# (git pull + docker compose up -d --build) en /opt/aria/Virtual_Asistant.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: 94.72.115.39
+          username: joel-superadmin
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/aria/Virtual_Asistant
+            git fetch origin main
+            git clean -fd          # limpia archivos no rastreados (respeta .gitignore, .env queda a salvo)
+            git reset --hard origin/main
+            sudo docker compose up -d --build
+            sudo docker image prune -f
