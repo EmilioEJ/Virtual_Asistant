@@ -10,17 +10,59 @@ from sentence_transformers import SentenceTransformer
 import chromadb
 from typing import List
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, UploadFile, File, BackgroundTasks, Request, Response, Depends
-from fastapi.responses import StreamingResponse, FileResponse, RedirectResponse
+from fastapi.responses import StreamingResponse, FileResponse, RedirectResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import sqlite3
 import uuid
+import hashlib
 from init_db import init_db, hash_password
 
 load_dotenv()
 
 app = FastAPI()
+
+
+# Evita que el navegador/Cloudflare sirvan versiones viejas del frontend tras un
+# deploy: los estáticos (JS/CSS/VRM) tienen nombre fijo, así que forzamos que el
+# navegador revalide en cada carga usando el ETag que ya envía StaticFiles.
+@app.middleware("http")
+async def no_cache_static_assets(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/static"):
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+    return response
+
+
+# --- Cache-busting de estáticos -------------------------------------------------
+# Cloudflare puede sobreescribir el Cache-Control del origen (Browser Cache TTL),
+# así que además versionamos las URLs de los assets: al cambiar el ?v en cada
+# deploy, el navegador está obligado a descargar la versión nueva.
+_VERSIONED_ASSETS = ("/static/style.css", "/static/script.js", "/static/admin.js")
+
+
+def _assets_version() -> str:
+    """Hash de los mtimes de los estáticos; cambia en cada deploy (imagen nueva)."""
+    h = hashlib.md5()
+    for asset in _VERSIONED_ASSETS:
+        try:
+            h.update(str(os.path.getmtime(asset.lstrip("/"))).encode())
+        except OSError:
+            pass
+    return h.hexdigest()[:8]
+
+
+ASSETS_VERSION = _assets_version()
+
+
+def _versioned_html(path: str) -> HTMLResponse:
+    """Sirve un HTML agregando ?v=<versión> a los assets para evitar caché vieja."""
+    with open(path, encoding="utf-8") as fh:
+        html = fh.read()
+    for asset in _VERSIONED_ASSETS:
+        html = html.replace(asset, f"{asset}?v={ASSETS_VERSION}")
+    return HTMLResponse(html)
 
 # ============================================================
 # Configuración global
@@ -566,19 +608,19 @@ async def websocket_endpoint(websocket: WebSocket):
 async def root_page(request: Request):
     if not verify_page_auth(request):
         return RedirectResponse(url="/login")
-    return FileResponse("static/index.html")
+    return _versioned_html("static/index.html")
 
 @app.get("/admin.html")
 async def admin_html_page(request: Request):
     if not verify_page_auth(request):
         return RedirectResponse(url="/login")
-    return FileResponse("static/admin.html")
+    return _versioned_html("static/admin.html")
 
 @app.get("/login")
 async def login_html_page(request: Request):
     # Si ya está autenticado, redirigir a inicio
     if verify_page_auth(request):
         return RedirectResponse(url="/")
-    return FileResponse("static/login.html")
+    return _versioned_html("static/login.html")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
