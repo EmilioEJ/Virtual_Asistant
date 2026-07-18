@@ -396,17 +396,26 @@ async def chat_siliconflow(message: str, mode: str):
     # --- PROCESO DE RECUPERACIÓN RAG CON QUERY EXPANSION ---
     context_text = ""
     if embedder and chroma_collection:
-        # Enriquecer la búsqueda (Query Expansion) para sortear problemas de sinónimos
+        import re
         search_query = message.lower()
-        if "semestre" in search_query or "nivel" in search_query:
-            search_query += " niveles malla curricular semestres tabla"
-        if "materia" in search_query or "asignatura" in search_query:
-            search_query += " asignaturas materias plan de estudios malla curricular tabla"
-
+        
+        # Normalización semántica para ayudar al modelo MiniLM
+        reemplazos = {
+            r'\b1er\b': 'primer', r'\b1ro\b': 'primer', r'\b1ero\b': 'primer',
+            r'\b2do\b': 'segundo', r'\b2da\b': 'segunda',
+            r'\b3er\b': 'tercer', r'\b3ro\b': 'tercero',
+            r'\b4to\b': 'cuarto', r'\b5to\b': 'quinto', r'\b6to\b': 'sexto',
+            r'\b7mo\b': 'séptimo', r'\b8vo\b': 'octavo',
+            r'\bsemestre\b': 'nivel', r'\bsemestres\b': 'niveles',
+            r'\bmateria\b': 'asignatura', r'\bmaterias\b': 'asignaturas'
+        }
+        for patron, reemplazo in reemplazos.items():
+            search_query = re.sub(patron, reemplazo, search_query)
+        
         query_embedding = embedder.encode(search_query).tolist()
         results = chroma_collection.query(
             query_embeddings=[query_embedding],
-            n_results=6 # Aumentamos a 6 fragmentos (casi 15,000 caracteres) para garantizar atrapar toda la tabla
+            n_results=12 # Aumentado a 12 para asegurar atrapar la malla completa
         )
         if results['documents'] and len(results['documents'][0]) > 0:
             context_text = "\n\n--- INFORMACIÓN RECUPERADA DEL DOCUMENTO OFICIAL ---\n"
