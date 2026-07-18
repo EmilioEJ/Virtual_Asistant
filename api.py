@@ -415,7 +415,7 @@ async def chat_siliconflow(message: str, mode: str):
         query_embedding = embedder.encode(search_query).tolist()
         results = chroma_collection.query(
             query_embeddings=[query_embedding],
-            n_results=12 # Aumentado a 12 para asegurar atrapar la malla completa
+            n_results=16 # Ampliado a 16 para abarcar la mayor parte de la malla sin romper la ventana de 8K tokens
         )
         if results['documents'] and len(results['documents'][0]) > 0:
             context_text = "\n\n--- INFORMACIÓN RECUPERADA DEL DOCUMENTO OFICIAL ---\n"

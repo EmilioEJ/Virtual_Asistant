@@ -49,7 +49,7 @@ async def process_pdfs_async(file_paths: list[str]):
         # 3. Cargar el modelo matemático (Lento la primera vez)
         add_log("Cargando motor de Inteligencia Artificial (SentenceTransformer)...")
         # Ejecutar carga sincrónica pesada en thread
-        embedder = await asyncio.to_thread(SentenceTransformer, "all-MiniLM-L6-v2")
+        embedder = await asyncio.to_thread(SentenceTransformer, "paraphrase-multilingual-MiniLM-L12-v2")
         
         rag_status["progress_percent"] = 40
         
@@ -67,7 +67,7 @@ async def process_pdfs_async(file_paths: list[str]):
             
             # Dividir en chunks
             add_log(f"✂️ Dividiendo {filename} en fragmentos lógicos...")
-            text_splitter = MarkdownTextSplitter(chunk_size=2500, chunk_overlap=400)
+            text_splitter = MarkdownTextSplitter(chunk_size=1500, chunk_overlap=300)
             chunks = text_splitter.split_text(md_text)
             
             # Agregar metadatos a cada chunk
