@@ -34,7 +34,7 @@ gemini_lock = asyncio.Lock()
 embedder = None
 chroma_collection = None
 
-AI_PROVIDER = os.getenv("AI_PROVIDER", "gemini").lower()  # "gemini" | "siliconflow" | "groq" | "openwebui"
+AI_PROVIDER = os.getenv("AI_PROVIDER", "gemini").lower()  # "gemini" | "siliconflow" | "groq" | "openwebui" | "nvidia"
 
 SYSTEM_INSTRUCTION = (
     "Eres Aria, el Asistente Virtual Oficial de la carrera universitaria de Tecnologías de la Información. "
@@ -161,6 +161,14 @@ def init_openwebui():
         provider_name="Open WebUI"
     )
 
+def init_nvidia():
+    _init_openai_compatible(
+        api_key=os.getenv("NVIDIA_API_KEY"),
+        base_url=os.getenv("NVIDIA_BASE_URL", "https://integrate.api.nvidia.com/v1"),
+        model_name=os.getenv("NVIDIA_MODEL_NAME", "z-ai/glm-5.2"),
+        provider_name="NVIDIA"
+    )
+
 # ============================================================
 # Startup
 # ============================================================
@@ -191,6 +199,8 @@ def startup_event():
             init_groq()
         elif AI_PROVIDER == "openwebui":
             init_openwebui()
+        elif AI_PROVIDER == "nvidia":
+            init_nvidia()
         else:
             init_gemini()
 
@@ -263,7 +273,7 @@ async def api_logout(response: Response):
 @app.post("/api/chat")
 async def chat_endpoint(data: MessageInput, user: str = Depends(get_current_user)):
     try:
-        if AI_PROVIDER in ("siliconflow", "groq", "openwebui"):
+        if AI_PROVIDER in ("siliconflow", "groq", "openwebui", "nvidia"):
             return await chat_siliconflow(data.message, data.mode)
         else:
             return await chat_gemini(data.message, data.mode)
@@ -390,6 +400,8 @@ async def chat_siliconflow(message: str, mode: str):
         model_name = os.getenv("GROQ_MODEL_NAME", "meta-llama/llama-4-scout-17b-16e-instruct")
     elif AI_PROVIDER == "openwebui":
         model_name = os.getenv("OPENWEBUI_MODEL_NAME", "qwen2.5-coder:14b")
+    elif AI_PROVIDER == "nvidia":
+        model_name = os.getenv("NVIDIA_MODEL_NAME", "z-ai/glm-5.2")
     else:
         model_name = os.getenv("SILICONFLOW_MODEL_NAME", "deepseek-ai/DeepSeek-V3")
         
