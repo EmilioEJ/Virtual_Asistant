@@ -6,6 +6,7 @@
     <title>ARIA - Asistente Universitario</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <!-- Three.js y VRM para el Avatar -->
     <!-- Async script loading for Three.js modern versions -->
@@ -85,15 +86,20 @@
         <aside class="avatar-panel">
             <div id="canvas-container"></div>
             
+            <!-- Capa de Subtítulos Dinámicos -->
+            <div id="subtitles-container" class="subtitles-overlay hidden">
+                <p id="subtitles-text"></p>
+            </div>
+            
             <!-- Etiqueta sobrepuesta estilo ciber/HUD -->
             <div class="hud-overlay">
                 <div class="hud-box">
                     <span class="hud-label">SISTEMA VISUAL</span>
                     <span class="hud-value">ONLINE</span>
                 </div>
-                <div class="hud-box">
-                    <span class="hud-label">ESTADO DE CÁMARA</span>
-                    <span class="hud-value camera-status">ESPERANDO FASE 2...</span>
+                <div class="hud-box" id="toggleCameraBtn" style="cursor: pointer;" title="Encender/Apagar Cámara Web">
+                    <span class="hud-label">CÁMARA WEB</span>
+                    <span class="hud-value camera-status">ON</span>
                 </div>
             </div>
 

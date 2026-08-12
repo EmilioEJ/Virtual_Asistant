@@ -253,8 +253,16 @@ function addMessage(text, isUser = false) {
     const msgDiv = document.createElement('div');
     msgDiv.classList.add('message');
     msgDiv.classList.add(isUser ? 'user-msg' : 'system-msg');
-    let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    msgDiv.innerHTML = `<p>${formattedText}</p>`;
+    
+    let formattedText;
+    if (typeof marked !== 'undefined') {
+        formattedText = marked.parse(text);
+    } else {
+        formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        formattedText = `<p>${formattedText}</p>`;
+    }
+    
+    msgDiv.innerHTML = formattedText;
     chatBox.appendChild(msgDiv);
     chatBox.scrollTop = chatBox.scrollHeight;
 }
@@ -363,6 +371,7 @@ async function speakTextAndShow(text) {
     if (currentAudio) {
         currentAudio.pause();
         currentAudio.currentTime = 0;
+        if (currentAudio.onended) currentAudio.onended(); // Limpia los subtítulos y UI
         currentAudio = null;
         isSpeaking = false;
         if (currentVrm) {
@@ -405,10 +414,29 @@ async function speakTextAndShow(text) {
         source.connect(analyser);
         analyser.connect(audioContext.destination);
 
+        let subtitleInterval = null;
+        const subsOverlay = document.getElementById('subtitles-container');
+        const subsText = document.getElementById('subtitles-text');
+
         audio.onplay = () => { 
             isSpeaking = true; 
             if (currentMode === "conversational") {
                 document.getElementById('convStatus').textContent = "Aria está hablando...";
+                
+                // Lógica dinámica de subtítulos
+                if (subsOverlay && subsText) {
+                    subsOverlay.classList.remove('hidden');
+                    const words = text.split(" ");
+                    subsText.innerText = words[0] || text;
+                    if (words.length > 1) {
+                        subtitleInterval = setInterval(() => {
+                            if (!audio.duration) return;
+                            const progress = audio.currentTime / audio.duration;
+                            const wordIndex = Math.floor(progress * words.length);
+                            subsText.innerText = words.slice(0, Math.max(1, wordIndex + 1)).join(" ");
+                        }, 100);
+                    }
+                }
             }
         };
         audio.onended = () => {
@@ -417,6 +445,9 @@ async function speakTextAndShow(text) {
                 currentVrm.expressionManager.setValue('aa', 0);
                 currentVrm.expressionManager.setValue('happy', 0);
             }
+            if (subtitleInterval) clearInterval(subtitleInterval);
+            if (subsOverlay) subsOverlay.classList.add('hidden');
+            
             if (currentMode === "conversational") {
                 document.getElementById('convStatus').textContent = "Toca el micrófono para hablar con Aria";
                 document.getElementById('convWaves').classList.remove('active');
@@ -564,6 +595,20 @@ const modeChatBtn = document.getElementById('modeChatBtn');
 const modeConvBtn = document.getElementById('modeConvBtn');
 const chatModeContainer = document.getElementById('chatModeContainer');
 const convModeContainer = document.getElementById('convModeContainer');
+const toggleCameraBtn = document.getElementById('toggleCameraBtn');
+let isUserCameraPreferenceOn = true; // Cámara activa por defecto en modo conversacional
+
+if (toggleCameraBtn) {
+    toggleCameraBtn.addEventListener('click', () => {
+        if (currentMode !== 'conversational') return;
+        isUserCameraPreferenceOn = !isUserCameraPreferenceOn;
+        if (isUserCameraPreferenceOn) {
+            startCameraForVision();
+        } else {
+            stopCameraForVision();
+        }
+    });
+}
 
 modeChatBtn.addEventListener('click', () => {
     currentMode = "chat";
@@ -573,6 +618,7 @@ modeChatBtn.addEventListener('click', () => {
     chatModeContainer.classList.remove('hidden-mode');
     convModeContainer.classList.remove('active-mode');
     convModeContainer.classList.add('hidden-mode');
+    if (typeof stopCameraForVision === 'function') stopCameraForVision();
 });
 
 modeConvBtn.addEventListener('click', () => {
@@ -583,6 +629,9 @@ modeConvBtn.addEventListener('click', () => {
     convModeContainer.classList.remove('hidden-mode');
     chatModeContainer.classList.remove('active-mode');
     chatModeContainer.classList.add('hidden-mode');
+    if (isUserCameraPreferenceOn && typeof startCameraForVision === 'function') {
+        startCameraForVision();
+    }
 });
 
 // ==========================================
@@ -608,11 +657,20 @@ document.body.appendChild(canvasElement);
 let ctx = canvasElement.getContext('2d');
 
 let isCameraActive = false;
+let visionInterval = null;
+let visionStream = null;
 
 async function startCameraForVision() {
+    if (isCameraActive) return;
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        videoElement.srcObject = stream;
+        visionStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        videoElement.srcObject = visionStream;
+        
+        const sysStatus = document.querySelector('.camera-status');
+        if (sysStatus) {
+            sysStatus.textContent = 'ON';
+            sysStatus.style.color = '#00ffcc';
+        }
         
         videoElement.onloadedmetadata = () => {
             canvasElement.width = 320; // Resolución fija baja para no saturar la red
@@ -620,7 +678,7 @@ async function startCameraForVision() {
             isCameraActive = true;
             
             // Enviar un frame al backend cada segundo (1000ms)
-            setInterval(() => {
+            visionInterval = setInterval(() => {
                 if (ws.readyState === WebSocket.OPEN && isCameraActive) {
                     ctx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
                     // Obtener base64 JPG
@@ -632,13 +690,38 @@ async function startCameraForVision() {
     } catch (err) {
         console.error("Error al acceder a la cámara para visión:", err);
         const sysStatus = document.querySelector('.camera-status');
-        if (sysStatus) sysStatus.textContent = 'Permiso de cámara denegado';
+        if (sysStatus) {
+            sysStatus.textContent = 'DENIED';
+            sysStatus.style.color = 'red';
+        }
+    }
+}
+
+function stopCameraForVision() {
+    isCameraActive = false;
+    
+    if (visionInterval) {
+        clearInterval(visionInterval);
+        visionInterval = null;
+    }
+    
+    if (visionStream) {
+        visionStream.getTracks().forEach(track => track.stop());
+        visionStream = null;
+    }
+    
+    const sysStatus = document.querySelector('.camera-status');
+    if (sysStatus) {
+        sysStatus.textContent = 'OFF';
+        sysStatus.style.color = '#f59e0b';
     }
 }
 
 ws.onopen = () => {
     console.log("Conectado al Ojo (Visión Artificial de OpenCV en servidor)");
-    startCameraForVision();
+    if (currentMode === "conversational" && isUserCameraPreferenceOn) {
+        startCameraForVision();
+    }
 };
 
 ws.onmessage = (event) => {

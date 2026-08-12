@@ -577,3 +577,69 @@ button svg {
 .camera-status {
     color: #f59e0b;
 }
+
+/* ==========================================
+   Nuevos estilos: Subtítulos
+   ========================================== */
+.subtitles-overlay {
+    position: absolute;
+    bottom: 240px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    text-align: center;
+    z-index: 100;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.subtitles-overlay.hidden {
+    opacity: 0;
+}
+
+#subtitles-text {
+    display: inline-block;
+    margin: 0;
+    padding: 12px 24px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #ffffff;
+    font-size: 1.3rem;
+    font-weight: 600;
+    border-radius: 12px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================
+   Estilos Markdown (Tablas y Listas)
+   ========================================== */
+.message table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+.message th, .message td {
+    border: 1px solid var(--glass-border);
+    padding: 8px;
+    text-align: left;
+}
+.message th {
+    background: rgba(255,255,255,0.1);
+}
+.message ul, .message ol {
+    margin: 10px 0 10px 20px;
+    padding: 0;
+}
+.message li {
+    margin-bottom: 5px;
+}
+.message p {
+    margin: 0 0 8px 0;
+}
+.message p:last-child {
+    margin-bottom: 0;
+}
