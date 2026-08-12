@@ -21,3 +21,4 @@ key.pem
 
 # Documentación privada
 docs/
+.playwright-cli/
