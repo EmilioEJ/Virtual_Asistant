@@ -24,8 +24,8 @@ docs/
 .playwright-cli/
 
 # Ignorar fuentes y auxiliares de LaTeX en Manuales (solo se suben los .pdf)
-Manuales/*.tex
-Manuales/*.aux
-Manuales/*.log
-Manuales/*.out
-Manuales/*.toc
+Manuales/**/*.tex
+Manuales/**/*.aux
+Manuales/**/*.log
+Manuales/**/*.out
+Manuales/**/*.toc
