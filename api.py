@@ -18,7 +18,7 @@ import sqlite3
 import uuid
 from init_db import init_db, hash_password
 
-load_dotenv()
+load_dotenv(override=True)
 
 app = FastAPI()
 
@@ -452,10 +452,15 @@ async def chat_siliconflow(message: str, mode: str):
         lambda: openai_client.chat.completions.create(
             model=model_name,
             messages=temp_messages,
-            temperature=0.1,      # Baja temperatura para reducir alucinaciones
+            temperature=0.1,
+            max_tokens=250,       # Limita enormemente el tiempo de generación y evita respuestas largas
         )
     )
     reply = response.choices[0].message.content
+    
+    # Limpiar etiquetas de razonamiento <think>...</think> si el modelo las usa (para evitar que Aria las hable)
+    import re
+    reply = re.sub(r'<think>.*?</think>', '', reply, flags=re.DOTALL).strip()
     
     # Guardamos en el historial solo la conversación limpia
     openai_history.append({"role": "user", "content": message})
