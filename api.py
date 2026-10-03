@@ -37,21 +37,18 @@ chroma_collection = None
 AI_PROVIDER = os.getenv("AI_PROVIDER", "gemini").lower()  # "gemini" | "siliconflow" | "groq" | "openwebui" | "nvidia"
 
 SYSTEM_INSTRUCTION = (
-    "Eres Aria, el Asistente Virtual Oficial de la carrera universitaria de Tecnologías de la Información. "
-    "Responde de forma concisa, amigable, clara y entusiasta. Si te presentas, di que te llamas Aria. "
-    "Basate SÓLO en el documento proporcionado. "
-    "IMPORTANTE: NUNCA uses emojis ni emoticonos en tus respuestas bajo ninguna circunstancia. Solo texto plano."
-    "\n\nREGLAS ESTRICTAS QUE DEBES SEGUIR SIN EXCEPCIÓN:\n"
-    "1. SOLO puedes responder preguntas cuya respuesta esté explícita o implícitamente contenida en el documento proporcionado. "
-    "2. Si la pregunta NO está relacionada con el contenido del documento (por ejemplo: programación general, ciencia, historia, cocina, humor, cultura popular, otros temas ajenos), "
-    "   responde SIEMPRE con exactamente: 'Solo puedo responder preguntas relacionadas con el documento de la carrera. ¿Tienes alguna pregunta sobre la carrera?' "
-    "3. NUNCA generes código fuente de ningún lenguaje de programación. "
-    "4. NUNCA inventes, supongas ni inferas información que no esté literalmente presente en el documento. "
-    "5. NUNCA uses emojis ni emoticonos. Solo texto plano. "
-    "6. NUNCA respondas preguntas sobre otros temas aunque el usuario insista, sea amable o formule la pregunta de manera indirecta. "
-    "7. Si no encuentras la respuesta en el documento, di: 'No encontré esa información en el documento de la carrera.' \n"
-    "8. MUY IMPORTANTE: En el contexto de esta carrera, las palabras 'Semestre' y 'Nivel' son sinónimos exactos. Si el usuario pregunta por 'semestres', busca y responde usando la información de los 'niveles'. "
-    "Recuerda: Tu conocimiento está limitado estrictamente al documento oficial de la carrera universitaria. Cualquier otra solicitud debe ser rechazada cortésmente con las frases indicadas."
+    "Eres Aria, la Asistente Virtual Oficial EXCLUSIVAMENTE de la carrera de Tecnologías de la Información "
+    "de la Universidad Indoamérica. Hablas en español, con tono amigable, claro y breve.\n\n"
+    "REGLAS INQUEBRANTABLES:\n"
+    "1. IDENTIDAD: Si te preguntan quién eres o qué sabes hacer, preséntate como Aria y di que puedes informar sobre la malla curricular, modalidades, becas, perfil de egreso y todo lo relacionado con la carrera de TI.\n"
+    "2. ALCANCE: Solo tienes información de la carrera de Tecnologías de la Información. Si preguntan por CUALQUIER otra carrera (industrial, medicina, derecho, etc.) o cualquier tema ajeno, responde EXACTAMENTE: 'Solo tengo información sobre la carrera de Tecnologías de la Información. ¿Tienes alguna pregunta sobre esta carrera?'\n"
+    "3. BREVEDAD OBLIGATORIA: Responde en MÁXIMO 2-3 oraciones cortas. Ve directo al grano. NUNCA hagas listas largas, NUNCA repitas información, NUNCA des explicaciones extensas.\n"
+    "4. FIDELIDAD: Basa tus respuestas SOLO en la información del documento proporcionado. NUNCA inventes datos.\n"
+    "5. Si no encuentras la respuesta en el documento, di: 'No encontré esa información en el documento de la carrera.'\n"
+    "6. 'Semestre' y 'Nivel' son sinónimos en esta carrera.\n"
+    "7. NUNCA uses emojis. Solo texto plano.\n"
+    "8. Al final de cada respuesta, pregunta brevemente si puedes ayudar con algo más.\n"
+    "9. NUNCA generes código fuente.\n"
 )
 
 class MessageInput(BaseModel):
@@ -405,10 +402,10 @@ async def chat_siliconflow(message: str, mode: str):
     else:
         model_name = os.getenv("SILICONFLOW_MODEL_NAME", "deepseek-ai/DeepSeek-V3")
         
-    # --- PROCESO DE RECUPERACIÓN RAG CON QUERY EXPANSION ---
+    # --- PROCESO DE RECUPERACIÓN RAG CON FILTRO DE RELEVANCIA ---
+    import re
     context_text = ""
     if embedder and chroma_collection:
-        import re
         search_query = message.lower()
         
         # Normalización semántica para ayudar al modelo MiniLM
@@ -419,7 +416,8 @@ async def chat_siliconflow(message: str, mode: str):
             r'\b4to\b': 'cuarto', r'\b5to\b': 'quinto', r'\b6to\b': 'sexto',
             r'\b7mo\b': 'séptimo', r'\b8vo\b': 'octavo',
             r'\bsemestre\b': 'nivel', r'\bsemestres\b': 'niveles',
-            r'\bmateria\b': 'asignatura', r'\bmaterias\b': 'asignaturas'
+            r'\bmateria\b': 'asignatura', r'\bmaterias\b': 'asignaturas',
+            r'\bbeca\b': 'beca ayuda economica', r'\bbecas\b': 'becas ayudas economicas'
         }
         for patron, reemplazo in reemplazos.items():
             search_query = re.sub(patron, reemplazo, search_query)
@@ -427,24 +425,31 @@ async def chat_siliconflow(message: str, mode: str):
         query_embedding = embedder.encode(search_query).tolist()
         results = chroma_collection.query(
             query_embeddings=[query_embedding],
-            n_results=16 # Ampliado a 16 para abarcar la mayor parte de la malla sin romper la ventana de 8K tokens
+            n_results=8,
+            include=["documents", "distances"]
         )
+        
+        # Filtrar solo fragmentos con distancia aceptable (más cercano = más relevante)
         if results['documents'] and len(results['documents'][0]) > 0:
-            context_text = "\n\n--- INFORMACIÓN RECUPERADA DEL DOCUMENTO OFICIAL ---\n"
-            for idx, doc in enumerate(results['documents'][0]):
-                context_text += f"[Contexto {idx+1}]: {doc}\n"
-            context_text += "----------------------------------------------------\n"
-            context_text += "Utiliza la información anterior para responder a la pregunta del usuario. Si la información no responde la pregunta, indícalo educadamente."
-            print(f"🔍 RAG: Recuperados {len(results['documents'][0])} fragmentos para la pregunta.")
+            relevant_docs = []
+            for doc, dist in zip(results['documents'][0], results['distances'][0]):
+                if dist < 1.3:  # Umbral de relevancia semántica
+                    relevant_docs.append(doc)
+            
+            if relevant_docs:
+                context_text = "\n\n--- INFORMACIÓN DEL DOCUMENTO OFICIAL ---\n"
+                for idx, doc in enumerate(relevant_docs[:6]):  # Máximo 6 fragmentos relevantes
+                    context_text += f"[Dato {idx+1}]: {doc}\n"
+                context_text += "---\nUsa SOLO esta información para responder. Si no responde la pregunta, dilo."
+                print(f"🔍 RAG: {len(relevant_docs)} fragmentos relevantes de {len(results['documents'][0])} recuperados.")
+            else:
+                print(f"🔍 RAG: 0 fragmentos relevantes (todos con distancia > 1.3).")
 
     # Clonamos el historial para enviar el contexto sin ensuciar el historial real
     temp_messages = list(openai_history)
     user_message_with_context = message
     if context_text:
         user_message_with_context += context_text
-
-    # Aplicar el mismo sistema de respuestas breves para el chat y conversacional
-    user_message_with_context += "\n\n(Regla del sistema: Tus respuestas DEBEN SER MUY CORTAS, concisas y directas. No uses párrafos largos ni listas detalladas. Mantén una charla natural y fluida.)"
 
     temp_messages.append({"role": "user", "content": user_message_with_context})
 
@@ -453,7 +458,7 @@ async def chat_siliconflow(message: str, mode: str):
             model=model_name,
             messages=temp_messages,
             temperature=0.1,
-            max_tokens=250,       # Limita enormemente el tiempo de generación y evita respuestas largas
+            max_tokens=150,  # Fuerza respuestas cortas y directas
         )
     )
     reply = response.choices[0].message.content

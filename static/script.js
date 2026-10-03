@@ -425,7 +425,9 @@ async function speakTextAndShow(text) {
                 
                 // Lógica dinámica de subtítulos
                 if (subsOverlay && subsText) {
-                    subsOverlay.classList.remove('hidden');
+                    if (subtitlesEnabled) {
+                        subsOverlay.classList.remove('hidden');
+                    }
                     const words = text.split(" ");
                     subsText.innerText = words[0] || text;
                     if (words.length > 1) {
@@ -433,7 +435,8 @@ async function speakTextAndShow(text) {
                             if (!audio.duration) return;
                             const progress = audio.currentTime / audio.duration;
                             const wordIndex = Math.floor(progress * words.length);
-                            subsText.innerText = words.slice(0, Math.max(1, wordIndex + 1)).join(" ");
+                            const startIdx = Math.max(0, wordIndex - 14); // Máximo 15 palabras simultáneas
+                            subsText.innerText = words.slice(startIdx, wordIndex + 1).join(" ");
                         }, 100);
                     }
                 }
@@ -606,6 +609,30 @@ if (toggleCameraBtn) {
             startCameraForVision();
         } else {
             stopCameraForVision();
+        }
+    });
+}
+
+// Botón de subtítulos
+const toggleSubtitlesBtn = document.getElementById('toggleSubtitlesBtn');
+let subtitlesEnabled = true;
+
+if (toggleSubtitlesBtn) {
+    toggleSubtitlesBtn.addEventListener('click', () => {
+        subtitlesEnabled = !subtitlesEnabled;
+        const statusSpan = toggleSubtitlesBtn.querySelector('.subtitles-status');
+        if (statusSpan) {
+            statusSpan.textContent = subtitlesEnabled ? "ON" : "OFF";
+            statusSpan.style.color = subtitlesEnabled ? "#00ffcc" : "#ff3366";
+        }
+        
+        const subsOverlay = document.getElementById('subtitles-container');
+        if (subsOverlay) {
+            if (!subtitlesEnabled) {
+                subsOverlay.classList.add('hidden');
+            } else if (isSpeaking) {
+                subsOverlay.classList.remove('hidden');
+            }
         }
     });
 }
