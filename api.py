@@ -475,16 +475,17 @@ async def chat_siliconflow(message: str, mode: str):
             search_query_expanded += " Prácticas de Servicio Comunitario Sexto Nivel Prácticas Preprofesionales Séptimo Nivel"
 
         query_embedding = embedder.encode(search_query_expanded).tolist()
-        # Mantenemos n_results=8 para no saturar el payload y evitar Connection Errors (Timeouts) en el LLM
+        # Mantenemos n_results=5 para no saturar el payload y evitar Connection Errors (Timeouts) en el LLM
         results = chroma_collection.query(
             query_embeddings=[query_embedding],
-            n_results=8,
+            n_results=5,
             include=["documents", "distances"]
         )
         
-        # En lugar de usar un umbral de distancia que filtra preguntas válidas, pasamos el top 8 al LLM y dejamos que él decida la relevancia.
+        # En lugar de usar un umbral de distancia estricto, pasamos solo los 3 mejores fragmentos al LLM.
+        # Esto reduce el payload a ~1000 tokens para asegurar que la API gratuita no lance Connection Error por timeout.
         if results['documents'] and len(results['documents'][0]) > 0:
-            relevant_docs = results['documents'][0]
+            relevant_docs = results['documents'][0][:3]
             
             if relevant_docs:
                 context_text = "\n\n--- INFORMACIÓN DEL DOCUMENTO OFICIAL ---\n"
