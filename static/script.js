@@ -848,4 +848,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 30);
     }
+
+    // Verificar el rol del usuario actual para mostrar/ocultar el botón de Admin
+    fetch('/api/me')
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.is_admin) {
+                const adminBtn = document.getElementById('adminBtn');
+                if (adminBtn) adminBtn.style.display = 'inline-flex';
+            }
+        })
+        .catch(err => console.error("Error verificando rol:", err));
 });

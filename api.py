@@ -43,9 +43,9 @@ SYSTEM_INSTRUCTION = (
     "1. IDENTIDAD: Si te preguntan quién eres o qué sabes hacer, preséntate como Aria y di que puedes informar sobre la malla curricular, modalidades, becas, perfil de egreso y todo lo relacionado con la carrera de TI.\n"
     "2. ALCANCE: Solo tienes información de la carrera de Tecnologías de la Información. Si preguntan por CUALQUIER otra carrera (industrial, medicina, derecho, etc.) o cualquier tema ajeno, responde EXACTAMENTE: 'Solo tengo información sobre la carrera de Tecnologías de la Información. ¿Tienes alguna pregunta sobre esta carrera?'\n"
     "3. BREVEDAD EXTREMA OBLIGATORIA: Responde en MÁXIMO 1 o 2 oraciones muy cortas. Ve directo al grano. NUNCA hagas listas largas, NUNCA repitas información, NUNCA des explicaciones extensas.\n"
-    "4. FIDELIDAD: Basa tus respuestas principalmente en la información del documento oficial proporcionado. Si la respuesta a una pregunta general (como campo laboral, requisitos de admisión generales, o si hay intercambios) no está en el documento, puedes usar tu conocimiento general para dar una respuesta amigable, lógica y genérica, pero aclarando que es información general de la carrera. Para modalidades, responde que se puede estudiar en Presencial, Semipresencial, Virtual e Híbrida.\n"
+    "4. FIDELIDAD: Basa tus respuestas en la información del documento oficial. Para modalidades, responde siempre: Presencial, Semipresencial, Virtual e Híbrida. Si no sabes un dato, dilo amablemente.\n"
     "5. Si la pregunta es específica de Indoamérica y no tienes el dato, di: 'No encontré esa información exacta, pero ¿te puedo ayudar con algo más sobre la Carrera?'\n"
-    "6. 'Semestre' y 'Nivel' son sinónimos en esta carrera.\n"
+    "6. 'Semestre' y 'Nivel' son sinónimos en esta carrera. El nivel de inglés requerido para graduarse es B1.\n"
     "7. NUNCA uses emojis. Solo texto plano.\n"
     "8. Al final de cada respuesta, pregunta brevemente si puedes ayudar con algo más.\n"
     "9. NUNCA generes código fuente.\n"
@@ -268,9 +268,20 @@ async def api_login(data: LoginRequest, response: Response):
     return {"message": "Login exitoso", "redirect": redirect_url}
 
 @app.post("/api/logout")
-async def api_logout(response: Response):
+async def api_logout(request: Request, response: Response):
+    session_token = request.cookies.get("session_token")
+    if session_token:
+        conn = sqlite3.connect("users.db")
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM sessions WHERE session_token = ?", (session_token,))
+        conn.commit()
+        conn.close()
     response.delete_cookie("session_token")
     return {"message": "Logout exitoso"}
+
+@app.get("/api/me")
+async def api_me(user: str = Depends(get_current_user)):
+    return {"username": user, "is_admin": user == "admin_eespinozajimenez"}
 
 # ============================================================
 # Endpoint de Chat
@@ -461,13 +472,13 @@ async def chat_siliconflow(message: str, mode: str):
         query_embedding = embedder.encode(search_query).tolist()
         results = chroma_collection.query(
             query_embeddings=[query_embedding],
-            n_results=10,
+            n_results=20,
             include=["documents", "distances"]
         )
         
-        # En lugar de usar un umbral de distancia que filtra preguntas válidas, pasamos el top 8 al LLM y dejamos que él decida la relevancia.
+        # En lugar de usar un umbral de distancia que filtra preguntas válidas, pasamos el top 20 al LLM y dejamos que él decida la relevancia.
         if results['documents'] and len(results['documents'][0]) > 0:
-            relevant_docs = results['documents'][0][:8]
+            relevant_docs = results['documents'][0]
             
             if relevant_docs:
                 context_text = "\n\n--- INFORMACIÓN DEL DOCUMENTO OFICIAL ---\n"
