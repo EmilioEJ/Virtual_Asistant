@@ -469,14 +469,20 @@ async def chat_siliconflow(message: str, mode: str):
         for patron, reemplazo in reemplazos.items():
             search_query = re.sub(patron, reemplazo, search_query)
         
-        query_embedding = embedder.encode(search_query).tolist()
+        # Mejorador de queries (Query Expansion) para sortear las debilidades del modelo de embeddings
+        search_query_expanded = search_query
+        if "practica" in search_query.lower() or "práctica" in search_query.lower():
+            search_query_expanded += " Prácticas de Servicio Comunitario Sexto Nivel Prácticas Preprofesionales Séptimo Nivel"
+
+        query_embedding = embedder.encode(search_query_expanded).tolist()
+        # Mantenemos n_results=8 para no saturar el payload y evitar Connection Errors (Timeouts) en el LLM
         results = chroma_collection.query(
             query_embeddings=[query_embedding],
-            n_results=20,
+            n_results=8,
             include=["documents", "distances"]
         )
         
-        # En lugar de usar un umbral de distancia que filtra preguntas válidas, pasamos el top 20 al LLM y dejamos que él decida la relevancia.
+        # En lugar de usar un umbral de distancia que filtra preguntas válidas, pasamos el top 8 al LLM y dejamos que él decida la relevancia.
         if results['documents'] and len(results['documents'][0]) > 0:
             relevant_docs = results['documents'][0]
             
