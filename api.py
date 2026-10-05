@@ -471,7 +471,7 @@ async def chat_siliconflow(message: str, mode: str):
                 context_text = "\n\n--- INFORMACIÓN DEL DOCUMENTO OFICIAL ---\n"
                 for idx, doc in enumerate(relevant_docs[:6]):  # Máximo 6 fragmentos relevantes
                     context_text += f"[Dato {idx+1}]: {doc}\n"
-                context_text += "---\nUsa SOLO esta información para responder. Si no responde la pregunta, dilo."
+                context_text += "---\nREGLA ESTRICTA: Usa SOLO la información anterior para responder de forma EXACTA y DIRECTA a la pregunta del usuario. Resume la respuesta para que sea muy concisa, no uses frases de relleno como 'basado en el documento' o 'en la malla curricular', simplemente da la respuesta directamente."
                 print(f"🔍 RAG: {len(relevant_docs)} fragmentos relevantes de {len(results['documents'][0])} recuperados (mejor dist: {results['distances'][0][0]:.2f}).")
             else:
                 print(f"🔍 RAG: 0 fragmentos relevantes (mejor dist: {results['distances'][0][0]:.2f}, umbral: 15.0).")
@@ -489,7 +489,7 @@ async def chat_siliconflow(message: str, mode: str):
             model=model_name,
             messages=temp_messages,
             temperature=0.1,
-            max_tokens=150,  # Fuerza respuestas cortas y directas
+            max_tokens=500,  # Aumentado para evitar que se corte a mitad de frase. La brevedad se maneja por prompt.
         )
     )
     reply = response.choices[0].message.content

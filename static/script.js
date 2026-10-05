@@ -98,8 +98,6 @@ loader.load(
     (progress) => console.log('Cargando Avatar...', Math.round(100.0 * (progress.loaded / progress.total)), '%'),
     (error) => {
         console.error('No se encontró "models/ARIA2.0.vrm". Ponlo en su lugar para cargar el avatar 3D.', error);
-        document.querySelector('.camera-status').textContent = "ERROR: AVATAR NO ENCONTRADO";
-        document.querySelector('.camera-status').style.color = "red";
     }
 );
 
@@ -606,8 +604,12 @@ if (toggleCameraBtn) {
         if (currentMode !== 'conversational') return;
         isUserCameraPreferenceOn = !isUserCameraPreferenceOn;
         if (isUserCameraPreferenceOn) {
+            toggleCameraBtn.classList.remove('inactive');
+            toggleCameraBtn.classList.add('active');
             startCameraForVision();
         } else {
+            toggleCameraBtn.classList.remove('active');
+            toggleCameraBtn.classList.add('inactive');
             stopCameraForVision();
         }
     });
@@ -620,10 +622,13 @@ let subtitlesEnabled = true;
 if (toggleSubtitlesBtn) {
     toggleSubtitlesBtn.addEventListener('click', () => {
         subtitlesEnabled = !subtitlesEnabled;
-        const statusSpan = toggleSubtitlesBtn.querySelector('.subtitles-status');
-        if (statusSpan) {
-            statusSpan.textContent = subtitlesEnabled ? "ON" : "OFF";
-            statusSpan.style.color = subtitlesEnabled ? "#00ffcc" : "#ff3366";
+        // Toggle visual state on the HUD icon box
+        if (subtitlesEnabled) {
+            toggleSubtitlesBtn.classList.remove('inactive');
+            toggleSubtitlesBtn.classList.add('active');
+        } else {
+            toggleSubtitlesBtn.classList.remove('active');
+            toggleSubtitlesBtn.classList.add('inactive');
         }
         
         const subsOverlay = document.getElementById('subtitles-container');
@@ -636,7 +641,6 @@ if (toggleSubtitlesBtn) {
         }
     });
 }
-
 modeChatBtn.addEventListener('click', () => {
     currentMode = "chat";
     modeChatBtn.classList.add('active');
@@ -693,10 +697,10 @@ async function startCameraForVision() {
         visionStream = await navigator.mediaDevices.getUserMedia({ video: true });
         videoElement.srcObject = visionStream;
         
-        const sysStatus = document.querySelector('.camera-status');
-        if (sysStatus) {
-            sysStatus.textContent = 'ON';
-            sysStatus.style.color = '#00ffcc';
+        const camBtn = document.getElementById('toggleCameraBtn');
+        if (camBtn) {
+            camBtn.classList.remove('inactive');
+            camBtn.classList.add('active');
         }
         
         videoElement.onloadedmetadata = () => {
@@ -716,10 +720,10 @@ async function startCameraForVision() {
         };
     } catch (err) {
         console.error("Error al acceder a la cámara para visión:", err);
-        const sysStatus = document.querySelector('.camera-status');
-        if (sysStatus) {
-            sysStatus.textContent = 'DENIED';
-            sysStatus.style.color = 'red';
+        const camBtn = document.getElementById('toggleCameraBtn');
+        if (camBtn) {
+            camBtn.classList.remove('active');
+            camBtn.classList.add('inactive');
         }
     }
 }
@@ -737,10 +741,10 @@ function stopCameraForVision() {
         visionStream = null;
     }
     
-    const sysStatus = document.querySelector('.camera-status');
-    if (sysStatus) {
-        sysStatus.textContent = 'OFF';
-        sysStatus.style.color = '#f59e0b';
+    const camBtn = document.getElementById('toggleCameraBtn');
+    if (camBtn) {
+        camBtn.classList.remove('active');
+        camBtn.classList.add('inactive');
     }
 }
 
@@ -753,17 +757,18 @@ ws.onopen = () => {
 
 ws.onmessage = (event) => {
     const action = event.data;
-    const sysStatus = document.querySelector('.camera-status');
+    const statusIndicator = document.getElementById('statusIndicator');
 
     if (action === "person_arrived") {
-        if (sysStatus) {
-            sysStatus.textContent = '✅ Usuario detectado en cámara';
-            sysStatus.style.color = '#00ffaa';
+        if (statusIndicator) {
+            statusIndicator.classList.remove('inactive');
+            statusIndicator.classList.add('active');
+            // Tooltip visual
+            statusIndicator.setAttribute('title', 'Usuario detectado en cámara');
         }
 
         if (!hasWelcomed) {
             hasWelcomed = true;
-            // Saludo inicial exacto solicitado, directo al sistema de voz (ahorra cuota de Gemini)
             speakTextAndShow("Parece que tenemos una visita. Hola, bienvenido a nuestra sesión de información sobre la carrera de Ingeniería en Tecnologías de la Información. Mi nombre es Aria, y estoy aquí para ayudarte con cualquier pregunta que tengas sobre nuestra carrera. ¿En qué puedo ayudarte hoy?");
         } else {
             if (wasInterrupted) {
@@ -775,9 +780,10 @@ ws.onmessage = (event) => {
         }
     }
     else if (action === "person_left") {
-        if (sysStatus) {
-            sysStatus.textContent = '⚠️ Usuario se fue...';
-            sysStatus.style.color = '#ffaa00';
+        if (statusIndicator) {
+            statusIndicator.classList.remove('active');
+            statusIndicator.classList.add('inactive');
+            statusIndicator.setAttribute('title', 'Usuario se alejó de la cámara');
         }
 
         if (isSpeaking) {
@@ -790,8 +796,7 @@ ws.onmessage = (event) => {
 };
 
 ws.onerror = () => {
-    const sysStatus = document.querySelector('.camera-status');
-    if (sysStatus) sysStatus.textContent = 'Error de conexión de cámara';
+    console.error('Error de conexión WebSocket para cámara');
 };
 
 // Función para las preguntas sugeridas en la interfaz
