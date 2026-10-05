@@ -825,20 +825,25 @@ document.addEventListener('DOMContentLoaded', () => {
         cloud.addEventListener('mouseenter', () => isHovered = true);
         cloud.addEventListener('mouseleave', () => isHovered = false);
         
+        const originalWidth = cloud.scrollWidth;
+        
         // Clonar las burbujas para lograr un loop infinito transparente
         const bubbles = Array.from(cloud.querySelectorAll('.suggestion-bubble'));
-        bubbles.forEach(bubble => {
-            const clone = bubble.cloneNode(true);
-            cloud.appendChild(clone);
-        });
+        // Clonamos múltiples veces para asegurarnos de que haya suficiente espacio para hacer scroll
+        for (let i = 0; i < 4; i++) {
+            bubbles.forEach(bubble => {
+                const clone = bubble.cloneNode(true);
+                cloud.appendChild(clone);
+            });
+        }
 
         // Mover 1 pixel cada 30ms (ritmo legible)
         setInterval(() => {
             if (!isHovered) {
                 cloud.scrollLeft += 1;
-                // Si el scroll supera la mitad exacta (el contenido original), retrocedemos al inicio
-                if (cloud.scrollLeft >= cloud.scrollWidth / 2) {
-                    cloud.scrollLeft -= cloud.scrollWidth / 2;
+                // Usar originalWidth como punto de reinicio para que el loop sea perfectamente continuo
+                if (cloud.scrollLeft >= originalWidth) {
+                    cloud.scrollLeft -= originalWidth;
                 }
             }
         }, 30);

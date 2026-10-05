@@ -395,7 +395,8 @@
                     body: JSON.stringify(data)
                 });
                 if (res.ok) {
-                    window.location.href = '/admin.html';
+                    const dataRes = await res.json();
+                    window.location.href = dataRes.redirect || '/';
                 } else {
                     errorMsg.style.display = 'block';
                 }

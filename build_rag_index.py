@@ -5,7 +5,7 @@ import chromadb
 import os 
 
 def extract_pdf_text(path: str) -> str:
-    print(f"📄 Extrayendo texto y tablas en formato Markdown del PDF: {path}...")
+    print(f"Extrayendo texto y tablas en formato Markdown del PDF: {path}...")
     # pymupdf4llm convierte automáticamente el PDF y las tablas en Markdown perfecto
     md_text = pymupdf4llm.to_markdown(path)
     return md_text
@@ -17,19 +17,19 @@ def build_index():
         return
 
     text = extract_pdf_text(pdf_path)
-    print(f"✅ Texto extraído: {len(text)} caracteres.")
+    print(f"Texto extraido: {len(text)} caracteres.")
 
     # Chunking: Dividir el texto en fragmentos (Aumentado para que quepan tablas completas)
-    print("✂️ Dividiendo documento Markdown en fragmentos (chunks)...")
+    print("Dividiendo documento Markdown en fragmentos (chunks)...")
     text_splitter = MarkdownTextSplitter(
         chunk_size=1500,
         chunk_overlap=300
     )
     chunks = text_splitter.split_text(text)
-    print(f"✅ Se generaron {len(chunks)} fragmentos.")
+    print(f"Se generaron {len(chunks)} fragmentos.")
 
     # Cargar modelo de Embeddings
-    print("🧠 Cargando modelo de Embeddings (sentence-transformers)...")
+    print("Cargando modelo de Embeddings (sentence-transformers)...")
     # Usamos paraphrase-multilingual-MiniLM-L12-v2, optimizado para español y más de 50 idiomas
     embedder = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
 
@@ -47,7 +47,7 @@ def build_index():
     collection = chroma_client.create_collection(name=collection_name)
 
     # Convertir a embeddings y guardar
-    print("⚙️ Calculando vectores y guardando en la base de datos... (esto puede tardar unos segundos)")
+    print("Calculando vectores y guardando en la base de datos... (esto puede tardar unos segundos)")
     embeddings = embedder.encode(chunks).tolist()
     
     ids = [f"chunk_{i}" for i in range(len(chunks))]

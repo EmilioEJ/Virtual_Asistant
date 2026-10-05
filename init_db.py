@@ -29,20 +29,35 @@ def init_db():
         )
     ''')
     
-    # Insertar el usuario administrador inicial
-    admin_user = "eespinozajimenez"
-    admin_pass = "eespinozajimenez"
+    # Insertar el usuario regular inicial
+    regular_user = "eespinozajimenez"
+    regular_pass = "eespinozajimenez"
     
-    # Comprobar si ya existe
+    # Comprobar si ya existe regular
+    cursor.execute("SELECT id FROM users WHERE username = ?", (regular_user,))
+    if not cursor.fetchone():
+        cursor.execute(
+            "INSERT INTO users (username, password_hash) VALUES (?, ?)",
+            (regular_user, hash_password(regular_pass))
+        )
+        print(f"Usuario regular '{regular_user}' creado exitosamente.")
+    else:
+        print(f"El usuario regular '{regular_user}' ya existe.")
+
+    # Insertar el usuario administrador especial
+    admin_user = "admin_eespinozajimenez"
+    admin_pass = "admin_eespinozajimenez"
+    
+    # Comprobar si ya existe admin
     cursor.execute("SELECT id FROM users WHERE username = ?", (admin_user,))
     if not cursor.fetchone():
         cursor.execute(
             "INSERT INTO users (username, password_hash) VALUES (?, ?)",
             (admin_user, hash_password(admin_pass))
         )
-        print(f"✅ Usuario administrador '{admin_user}' creado exitosamente.")
+        print(f"Usuario administrador '{admin_user}' creado exitosamente.")
     else:
-        print(f"ℹ️ El usuario administrador '{admin_user}' ya existe.")
+        print(f"El usuario administrador '{admin_user}' ya existe.")
         
     conn.commit()
     conn.close()

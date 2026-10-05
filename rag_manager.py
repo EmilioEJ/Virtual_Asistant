@@ -59,14 +59,14 @@ async def process_pdfs_async(file_paths: list[str]):
         total_files = len(file_paths)
         for idx, path in enumerate(file_paths):
             filename = os.path.basename(path)
-            add_log(f"📄 Procesando documento ({idx+1}/{total_files}): {filename}")
+            add_log(f"Procesando documento ({idx+1}/{total_files}): {filename}")
             
             # Extraer Markdown
             md_text = await asyncio.to_thread(pymupdf4llm.to_markdown, path)
-            add_log(f"✅ {filename} leído exitosamente ({len(md_text)} caracteres).")
+            add_log(f"{filename} leido exitosamente ({len(md_text)} caracteres).")
             
             # Dividir en chunks
-            add_log(f"✂️ Dividiendo {filename} en fragmentos lógicos...")
+            add_log(f"Dividiendo {filename} en fragmentos logicos...")
             text_splitter = MarkdownTextSplitter(chunk_size=1500, chunk_overlap=300)
             chunks = text_splitter.split_text(md_text)
             
@@ -109,7 +109,7 @@ async def process_pdfs_async(file_paths: list[str]):
             rag_status["docs_loaded"] = total_files
             add_log("🎉 ¡Proceso RAG completado con éxito! El asistente ya tiene la nueva información.")
         else:
-            add_log("⚠️ No se extrajo ningún texto de los PDFs.")
+            add_log("No se extrajo ningun texto de los PDFs.")
             
         rag_status["progress_percent"] = 100
         rag_status["is_processing"] = False

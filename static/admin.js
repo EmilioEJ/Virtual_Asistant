@@ -87,7 +87,7 @@ function renderFileList() {
     selectedFiles.forEach((file, index) => {
         const badge = document.createElement('div');
         badge.className = 'file-badge';
-        badge.innerHTML = `📄 ${file.name} <span style="cursor:pointer; margin-left:5px" onclick="removeFile(${index})">❌</span>`;
+        badge.innerHTML = `Doc: ${file.name} <span style="cursor:pointer; margin-left:5px" onclick="removeFile(${index})">[X]</span>`;
         fileList.appendChild(badge);
     });
 
