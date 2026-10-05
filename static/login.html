@@ -4,177 +4,406 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ARIA - Iniciar Sesión</title>
-    <link rel="stylesheet" href="/static/style.css?v=3.0">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css?v=4.0">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             margin: 0;
-            background: var(--gradient-bg);
-            background-color: var(--bg-main);
+            height: 100vh;
+            background-color: #0b0c10;
+            color: #f3f4f6;
             font-family: 'Outfit', sans-serif;
-            color: var(--text-main);
-        }
-        
-        .login-container {
-            background: var(--bg-panel);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid var(--glass-border);
-            border-radius: 28px;
-            padding: 40px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 10px 40px var(--shadow-color);
-            text-align: center;
+            overflow: hidden;
         }
 
-        .login-container h1 {
-            font-weight: 800;
-            font-size: 2.2rem;
-            letter-spacing: 2px;
-            margin-bottom: 5px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+        .login-wrapper {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ==================== LEFT PANEL (ANIMATIONS) ==================== */
+        .left-panel {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: radial-gradient(circle at center, rgba(138, 99, 210, 0.08) 0%, transparent 60%);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* RIPPLE EFFECT */
+        .ripple-container {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-mask-image: linear-gradient(to bottom, white, transparent);
+            mask-image: linear-gradient(to bottom, white, transparent);
+        }
+
+        .ripple-circle {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(138, 99, 210, 0.15);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .ripple-circle:last-child {
+            border-style: dashed;
+        }
+
+        /* ORBITING CIRCLES EFFECT */
+        .orbit-container {
+            position: relative;
+            width: 600px;
+            height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .orbit-text {
+            font-size: 5rem;
+            font-weight: 700;
+            background: linear-gradient(180deg, #ffffff, rgba(255, 255, 255, 0.3));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 4px 20px var(--primary-glow);
+            z-index: 10;
+            text-shadow: 0 0 60px rgba(138, 99, 210, 0.3);
+            letter-spacing: 2px;
         }
 
-        .login-container p {
-            color: var(--text-muted);
-            margin-bottom: 30px;
+        .orbit-path {
+            position: absolute;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .orbit-item {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+        }
+
+        .orbit-spin {
+            animation: spin var(--duration) linear infinite;
+            animation-delay: calc(var(--delay) * -1s);
+        }
+
+        .orbit-spin.reverse {
+            animation: spin-reverse var(--duration) linear infinite;
+        }
+
+        .orbit-icon-wrapper {
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            top: -22px;
+            left: -22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            backdrop-filter: blur(8px);
+            transform: translateX(var(--radius));
+        }
+
+        .orbit-spin .orbit-icon-wrapper {
+            animation: spin-reverse-icon var(--duration) linear infinite;
+            animation-delay: calc(var(--delay) * -1s);
+        }
+
+        .orbit-spin.reverse .orbit-icon-wrapper {
+            animation: spin-icon var(--duration) linear infinite;
+            animation-delay: calc(var(--delay) * -1s);
+        }
+
+        .orbit-icon-wrapper svg {
+            width: 55%;
+            height: 55%;
+            color: #ffffff;
+            opacity: 0.8;
+            stroke-width: 1.5;
+        }
+
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes spin-reverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+        @keyframes spin-reverse-icon { from { transform: translateX(var(--radius)) rotate(0deg); } to { transform: translateX(var(--radius)) rotate(-360deg); } }
+        @keyframes spin-icon { from { transform: translateX(var(--radius)) rotate(-360deg); } to { transform: translateX(var(--radius)) rotate(0deg); } }
+
+        /* ==================== RIGHT PANEL (FORM) ==================== */
+        .right-panel {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 10%;
+            z-index: 10;
+            background: #0b0c10;
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 360px;
+            animation: slideUp 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes slideUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-container h2 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+
+        .form-container p {
+            color: #9ca3af;
+            margin-bottom: 32px;
             font-size: 0.95rem;
-            font-weight: 400;
         }
 
         .form-group {
             margin-bottom: 20px;
-            text-align: left;
+            position: relative;
         }
 
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 500;
-            color: var(--text-main);
+            color: #d1d5db;
+        }
+
+        .input-wrapper {
+            position: relative;
+            border-radius: 10px;
+            padding: 2px;
+            background: transparent;
+            transition: background 0.3s ease;
+        }
+
+        .input-wrapper:focus-within {
+            background: radial-gradient(circle at center, rgba(138, 99, 210, 0.6) 0%, transparent 80%);
         }
 
         .form-group input {
             width: 100%;
-            padding: 12px 14px;
-            border-radius: 14px;
-            border: 1px solid var(--glass-border);
-            background: var(--bg-input);
-            color: var(--text-main);
-            font-size: 1rem;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: none;
+            background: #18181b;
+            color: #ffffff;
+            font-size: 0.95rem;
             font-family: inherit;
             box-sizing: border-box;
             outline: none;
-            transition: all 0.3s ease;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+            transition: box-shadow 0.3s ease, background 0.3s ease;
         }
 
         .form-group input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-soft);
+            background: #27272a;
+            box-shadow: inset 0 0 0 1px rgba(138, 99, 210, 0.6);
+        }
+
+        .form-group input::placeholder {
+            color: #52525b;
         }
 
         .btn-login {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            color: white;
+            background: linear-gradient(135deg, #e4e4e7, #ffffff);
+            color: #09090b;
             border: none;
-            padding: 14px;
-            border-radius: 14px;
-            font-size: 1.05rem;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
             font-weight: 600;
             width: 100%;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
             margin-top: 10px;
-            box-shadow: 0 6px 16px var(--primary-glow);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
         }
 
         .btn-login:hover {
-            filter: brightness(1.1);
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px var(--primary-glow);
+            box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
         }
 
         .btn-login:active {
-            transform: scale(0.98);
+            transform: translateY(0) scale(0.98);
         }
 
         .error-message {
-            color: var(--danger);
+            color: #f87171;
             font-size: 0.85rem;
-            margin-top: 15px;
+            margin-top: 12px;
+            text-align: center;
             display: none;
+        }
+
+        @media (max-width: 768px) {
+            .left-panel { display: none; }
+            .right-panel { padding: 0 5%; }
         }
     </style>
 </head>
 <body>
 
-    <div class="login-container">
-        <h1>ARIA</h1>
-        <p>Tu asistente virtual de la carrera en Tecnologías de la Información</p>
-        
-        <form id="loginForm">
-            <div class="form-group">
-                <label for="username">Usuario</label>
-                <input type="text" id="username" name="username" required autocomplete="username">
-            </div>
+    <div class="login-wrapper">
+        <!-- Panel Izquierdo: Animaciones Tech / ARIA -->
+        <div class="left-panel">
             
-            <div class="form-group">
-                <label for="password">Contraseña</label>
-                <input type="password" id="password" name="password" required autocomplete="current-password">
+            <!-- Ripple Background -->
+            <div class="ripple-container">
+                <div class="ripple-circle" style="width: 210px; height: 210px; opacity: 0.24; animation-delay: 0s;"></div>
+                <div class="ripple-circle" style="width: 280px; height: 280px; opacity: 0.21; animation-delay: 0.06s;"></div>
+                <div class="ripple-circle" style="width: 350px; height: 350px; opacity: 0.18; animation-delay: 0.12s;"></div>
+                <div class="ripple-circle" style="width: 420px; height: 420px; opacity: 0.15; animation-delay: 0.18s;"></div>
+                <div class="ripple-circle" style="width: 490px; height: 490px; opacity: 0.12; animation-delay: 0.24s;"></div>
+                <div class="ripple-circle" style="width: 560px; height: 560px; opacity: 0.09; animation-delay: 0.3s;"></div>
+                <div class="ripple-circle" style="width: 630px; height: 630px; opacity: 0.06; animation-delay: 0.36s;"></div>
             </div>
-            
-            <button type="submit" class="btn-login" id="loginBtn">Iniciar Sesión</button>
-            <div id="errorMsg" class="error-message">Credenciales incorrectas. Inténtalo de nuevo.</div>
-        </form>
+
+            <!-- Orbiting Icons -->
+            <div class="orbit-container">
+                <h1 class="orbit-text">ARIA</h1>
+
+                <!-- Paths -->
+                <div class="orbit-path" style="width: 200px; height: 200px;"></div>
+                <div class="orbit-path" style="width: 300px; height: 300px;"></div>
+                <div class="orbit-path" style="width: 420px; height: 420px;"></div>
+                <div class="orbit-path" style="width: 540px; height: 540px;"></div>
+
+                <!-- Items -->
+                <div class="orbit-item orbit-spin" style="--duration: 20s; --radius: 100px; --delay: 20s;">
+                    <div class="orbit-icon-wrapper">
+                        <!-- Bot / IA -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="14" x="3" y="7" rx="2" ry="2"/><path d="M12 7V3"/><path d="M10 3h4"/><path d="M8 13v.01"/><path d="M16 13v.01"/><path d="M10 17h4"/></svg>
+                    </div>
+                </div>
+                <div class="orbit-item orbit-spin" style="--duration: 20s; --radius: 100px; --delay: 10s;">
+                    <div class="orbit-icon-wrapper">
+                        <!-- Chat / Message -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </div>
+                </div>
+
+                <div class="orbit-item orbit-spin" style="--duration: 25s; --radius: 150px; --delay: 0s;">
+                    <div class="orbit-icon-wrapper">
+                        <!-- Graduation Cap / Universidad -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                    </div>
+                </div>
+                <div class="orbit-item orbit-spin reverse" style="--duration: 25s; --radius: 150px; --delay: 12.5s;">
+                    <div class="orbit-icon-wrapper">
+                        <!-- Book / Malla Curricular -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                    </div>
+                </div>
+
+                <div class="orbit-item orbit-spin reverse" style="--duration: 30s; --radius: 210px; --delay: 0s;">
+                    <div class="orbit-icon-wrapper">
+                        <!-- File Text / Reglamentos -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+                    </div>
+                </div>
+                <div class="orbit-item orbit-spin reverse" style="--duration: 30s; --radius: 210px; --delay: 15s;">
+                    <div class="orbit-icon-wrapper">
+                        <!-- User / Estudiante -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                </div>
+
+                <div class="orbit-item orbit-spin" style="--duration: 40s; --radius: 270px; --delay: 10s;">
+                    <div class="orbit-icon-wrapper">
+                        <!-- Database / RAG -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
+                    </div>
+                </div>
+                <div class="orbit-item orbit-spin reverse" style="--duration: 40s; --radius: 270px; --delay: 30s;">
+                    <div class="orbit-icon-wrapper">
+                        <!-- Camera / Visión -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Derecho: Formulario -->
+        <div class="right-panel">
+            <div class="form-container">
+                <h2>Bienvenido</h2>
+                <p>Inicia sesión en tu cuenta para acceder</p>
+                
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="username">Usuario</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="username" name="username" placeholder="Ingresa tu usuario" required autocomplete="username">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Contraseña</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-login" id="loginBtn">Iniciar Sesión</button>
+                    <div id="errorMsg" class="error-message">Credenciales incorrectas. Inténtalo de nuevo.</div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <script>
-        const loginForm = document.getElementById('loginForm');
-        const errorMsg = document.getElementById('errorMsg');
-        const loginBtn = document.getElementById('loginBtn');
-
-        loginForm.addEventListener('submit', async (e) => {
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            errorMsg.style.display = 'none';
-            loginBtn.textContent = 'Verificando...';
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            const errorMsg = document.getElementById('errorMsg');
+            const loginBtn = document.getElementById('loginBtn');
+            
             loginBtn.disabled = true;
-
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+            loginBtn.textContent = "Verificando...";
+            errorMsg.style.display = 'none';
 
             try {
-                const response = await fetch('/api/login', {
+                const res = await fetch('/api/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ username, password })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
                 });
-
-                if (response.ok) {
-                    // Redirect to the main app
-                    window.location.href = '/';
+                if (res.ok) {
+                    window.location.href = '/admin.html';
                 } else {
-                    const data = await response.json();
-                    errorMsg.textContent = data.detail || 'Credenciales incorrectas.';
                     errorMsg.style.display = 'block';
-                    loginBtn.textContent = 'Iniciar Sesión';
-                    loginBtn.disabled = false;
                 }
-            } catch (error) {
-                errorMsg.textContent = 'Error de conexión con el servidor.';
+            } catch (err) {
                 errorMsg.style.display = 'block';
-                loginBtn.textContent = 'Iniciar Sesión';
+            } finally {
                 loginBtn.disabled = false;
+                loginBtn.textContent = "Iniciar Sesión";
             }
         });
     </script>

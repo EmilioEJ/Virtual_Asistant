@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ARIA - Panel de Administración</title>
-    <link rel="stylesheet" href="/static/style.css?v=3.0">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css?v=4.0">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             display: flex;
@@ -13,7 +13,6 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background: var(--gradient-bg);
             background-color: var(--bg-main);
             font-family: 'Outfit', sans-serif;
             color: var(--text-main);
@@ -24,11 +23,11 @@
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
             border: 1px solid var(--glass-border);
-            border-radius: 28px;
+            border-radius: 20px;
             padding: 40px;
             width: 90%;
             max-width: 800px;
-            box-shadow: 0 10px 40px var(--shadow-color);
+            box-shadow: 0 8px 32px var(--shadow-color);
             display: flex;
             flex-direction: column;
             gap: 20px;
@@ -36,21 +35,18 @@
 
         h1 {
             margin: 0;
-            font-size: 1.8rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
+            font-size: 1.6rem;
+            font-weight: 600;
             display: flex;
             align-items: center;
             gap: 10px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--text-main);
         }
 
         .status-card {
             background: var(--bg-input);
-            border-radius: 16px;
-            padding: 18px 20px;
+            border-radius: 12px;
+            padding: 16px 20px;
             border: 1px solid var(--glass-border);
             display: flex;
             justify-content: space-between;
@@ -58,19 +54,18 @@
         }
 
         .drop-zone {
-            border: 2px dashed rgba(92, 108, 255, 0.4);
-            border-radius: 20px;
+            border: 2px dashed var(--text-muted);
+            border-radius: 16px;
             padding: 50px 20px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: var(--transition-smooth);
             background: var(--bg-input);
         }
 
         .drop-zone.dragover {
             border-color: var(--primary);
             background: var(--primary-soft);
-            box-shadow: 0 0 15px var(--primary-glow);
         }
 
         .drop-zone p {
@@ -88,43 +83,42 @@
         }
 
         .file-badge {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+            background: var(--primary-soft);
             padding: 6px 12px;
-            border-radius: 10px;
+            border-radius: 8px;
             font-size: 0.85rem;
             font-weight: 500;
-            color: white;
+            color: var(--primary);
             display: flex;
             align-items: center;
             gap: 6px;
-            box-shadow: 0 4px 10px var(--primary-glow);
+            border: 1px solid var(--primary);
         }
 
         .btn-upload {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+            background: var(--primary);
             color: white;
             border: none;
             padding: 14px 24px;
-            border-radius: 14px;
-            font-size: 1.05rem;
-            font-weight: 600;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
             cursor: pointer;
             width: 100%;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: var(--transition-smooth);
             margin-top: 10px;
-            box-shadow: 0 6px 16px var(--primary-glow);
         }
 
         .btn-upload:hover:not(:disabled) {
-            filter: brightness(1.1);
+            opacity: 0.9;
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px var(--primary-glow);
+            box-shadow: 0 4px 12px rgba(107, 76, 154, 0.3);
         }
 
         .btn-upload:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-            box-shadow: none;
+            background: var(--text-muted);
         }
 
         /* Terminal de progreso */
@@ -144,20 +138,19 @@
         .progress-fill {
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
+            background: var(--primary);
             transition: width 0.3s ease;
         }
 
         .terminal-logs {
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 8px;
             padding: 16px;
             height: 200px;
             overflow-y: auto;
             font-family: 'Courier New', Courier, monospace;
             font-size: 0.85rem;
-            color: var(--success);
-            border: 1px solid var(--glass-border);
+            color: #4ade80;
         }
 
         .terminal-logs p { margin: 2px 0; }
@@ -172,8 +165,8 @@
         .back-link {
             color: var(--text-muted);
             text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s ease;
+            font-weight: 400;
+            transition: var(--transition-smooth);
             font-size: 0.95rem;
         }
         .back-link:hover {
