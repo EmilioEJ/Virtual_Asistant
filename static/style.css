@@ -693,3 +693,116 @@ input::placeholder {
 .message li { margin-bottom: 6px; }
 .message p { margin: 0 0 8px 0; }
 .message p:last-child { margin-bottom: 0; }
+
+/* =========================================
+   Soporte Responsive (Mobile)
+   ========================================= */
+@media (max-width: 900px) {
+    .app-container {
+        flex-direction: column;
+        padding: 8px;
+        gap: 8px;
+        height: 100dvh; /* Soporte para la barra de navegación en iOS/Android */
+    }
+    
+    .chat-panel {
+        order: 2;
+        max-width: 100%;
+        flex: 1; 
+        min-height: 0; /* Permite que el chat se contraiga al abrir el teclado */
+        padding: 16px;
+        border-radius: 16px;
+    }
+
+    .avatar-panel {
+        order: 1;
+        flex: 0 0 35%; /* El avatar ocupa el 35% superior */
+        min-height: 200px;
+        border-radius: 16px;
+    }
+
+    /* Ajustar controles flotantes del HUD */
+    .hud-overlay {
+        top: 12px;
+        right: 12px;
+        flex-direction: row; /* En horizontal para ahorrar espacio */
+        gap: 8px;
+    }
+    
+    .hud-box {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .hud-box .hud-icon {
+        width: 18px;
+        height: 18px;
+    }
+
+    .subtitles-overlay {
+        bottom: 90px;
+        width: 95%;
+    }
+    
+    #subtitles-text {
+        font-size: 0.95rem;
+        padding: 8px 16px;
+    }
+
+    /* Sugerencias compactas */
+    .suggestion-wrapper {
+        bottom: 8px;
+        padding: 0 8px;
+    }
+    
+    .suggestion-cloud {
+        padding-bottom: 4px;
+    }
+    
+    .suggestion-title {
+        font-size: 0.8rem;
+        margin-bottom: 6px;
+    }
+
+    .suggestion-bubble {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+
+    /* Header del chat más pequeño */
+    header {
+        margin-bottom: 12px;
+    }
+    
+    .brand-title {
+        font-size: 1.4rem;
+    }
+    
+    .subtitle {
+        font-size: 0.8rem;
+    }
+    
+    .header-actions {
+        gap: 6px;
+    }
+    
+    .header-btn {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+    
+    /* Botón micrófono modo Conversar */
+    .big-mic-btn {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .big-mic-btn svg {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .conversational-ui {
+        gap: 20px;
+    }
+}
