@@ -6,7 +6,7 @@
     <title>ARIA - Asistente Universitario</title>
     <meta name="description" content="Aria, el Asistente Virtual inteligente de la carrera de Tecnologías de la Información de la Universidad Indoamérica.">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css?v=5.0">
+    <link rel="stylesheet" href="/static/style.css?v=6.0">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <!-- Three.js y VRM para el Avatar -->
@@ -112,8 +112,11 @@
             <div id="canvas-container"></div>
             
             <!-- Capa de Subtítulos -->
-            <div id="subtitles-container" class="subtitles-overlay hidden">
-                <p id="subtitles-text"></p>
+            <div id="subtitles-container" class="subtitles-overlay hidden" aria-live="polite">
+                <div class="subtitles-card">
+                    <span class="subtitles-speaker"><span class="speaker-dot"></span>ARIA</span>
+                    <p id="subtitles-text"></p>
+                </div>
             </div>
             
             <!-- HUD con iconos modernos -->
@@ -143,17 +146,32 @@
                 </div>
             </div>
 
-            <!-- Nube de Ideas / Sugerencias -->
+            <!-- Carrusel de preguntas sugeridas -->
             <div class="suggestion-wrapper">
-                <p class="suggestion-title">Preguntas sugeridas:</p>
-                <div class="suggestion-cloud">
-                    <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Cuánto cuesta la matrícula en la modalidad presencial?</button>
-                    <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Qué nivel de inglés necesito para graduarme?</button>
-                    <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Qué materias veré o cómo es la malla curricular?</button>
-                    <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Qué becas o ayudas económicas ofrece la universidad?</button>
-                    <button class="suggestion-bubble" onclick="askSuggestion(this)">¿En qué consiste el examen de ubicación diagnóstica?</button>
-                    <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Qué pasa si repruebo una materia?</button>
-                    <button class="suggestion-bubble" onclick="askSuggestion(this)">¿En qué modalidades se ofrece esta carrera?</button>
+                <div class="suggestion-header">
+                    <p class="suggestion-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 10.7l-5.1 3.7L16.8 20 12 16.6 7.2 20l1.9-5.6L4 10.7l6.1-1.9z"/></svg>
+                        Preguntas sugeridas
+                    </p>
+                    <div class="suggestion-nav">
+                        <button class="suggestion-arrow" id="sugPrev" type="button" aria-label="Pregunta anterior">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                        </button>
+                        <button class="suggestion-arrow" id="sugNext" type="button" aria-label="Pregunta siguiente">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="suggestion-viewport" id="suggestionViewport">
+                    <div class="suggestion-cloud" id="suggestionTrack">
+                        <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Cuánto cuesta la matrícula en la modalidad presencial?</button>
+                        <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Qué nivel de inglés necesito para graduarme?</button>
+                        <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Qué materias veré o cómo es la malla curricular?</button>
+                        <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Qué becas o ayudas económicas ofrece la universidad?</button>
+                        <button class="suggestion-bubble" onclick="askSuggestion(this)">¿En qué consiste el examen de ubicación diagnóstica?</button>
+                        <button class="suggestion-bubble" onclick="askSuggestion(this)">¿Qué pasa si repruebo una materia?</button>
+                        <button class="suggestion-bubble" onclick="askSuggestion(this)">¿En qué modalidades se ofrece esta carrera?</button>
+                    </div>
                 </div>
             </div>
         </aside>
@@ -192,6 +210,6 @@
             }
         }
     </script>
-    <script type="module" src="/static/script.js?v=4.0"></script>
+    <script type="module" src="/static/script.js?v=5.0"></script>
 </body>
 </html>

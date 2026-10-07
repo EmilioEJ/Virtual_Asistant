@@ -118,114 +118,189 @@ document.addEventListener('mousemove', (event) => {
 const clock = new THREE.Clock();
 let currentMouthOpen = 0; // Para suavizar el movimiento de la boca
 let nextBlinkTime = 0; // Para el parpadeo aleatorio
+let volumenVoz = 0; // Energía del audio suavizada (0 a 1), usada por la boca y los gestos
+
+// ==========================================
+// 1.1 Animador del avatar: estados, mirada y gestos
+// ==========================================
+// Estados: 'reposo' | 'escuchando' | 'pensando' | 'hablando'
+const avatar = { estado: 'reposo', desde: 0, gesto: null, proximoGesto: 0, mirada: { x: 0, y: 0 }, objetivoMirada: { x: 0, y: 0 }, proximaMirada: 0 };
+
+function setEstadoAvatar(estado) {
+    if (avatar.estado === estado) return;
+    avatar.estado = estado;
+    avatar.desde = clock.elapsedTime;
+    avatar.proximoGesto = clock.elapsedTime + 0.6;
+    avatar.proximaMirada = 0;
+}
+
+// Pose de reposo de cada hueso [x, y, z]
+const POSE_BASE = {
+    leftUpperArm: [0.1, -0.15, -1.25], rightUpperArm: [0.1, 0.15, 1.25],
+    leftLowerArm: [-0.25, -0.1, 0], rightLowerArm: [-0.25, 0.1, 0],
+    leftHand: [0, 0, 0], rightHand: [0, 0, 0],
+};
+
+// Gestos: pose objetivo por hueso y, opcionalmente, una oscilación (saludo)
+const GESTOS = {
+    saludo: { duracion: 3.0, pose: {
+        rightUpperArm: [0.0, 0.35, 0.35], rightLowerArm: [-0.6, 0.2, -1.75], rightHand: [0, 0, -0.1] },
+        oscilar: { hueso: 'rightLowerArm', eje: 2, amplitud: 0.28, frecuencia: 2.2 } },
+    explicar: { duracion: 2.4, pose: {
+        rightUpperArm: [-0.15, 0.35, 1.05], rightLowerArm: [-0.2, 1.35, 0], rightHand: [0, 0, 0.15] } },
+    explicarIzquierda: { duracion: 2.4, pose: {
+        leftUpperArm: [-0.15, -0.35, -1.05], leftLowerArm: [-0.2, -1.35, 0], leftHand: [0, 0, -0.15] } },
+    abrirManos: { duracion: 2.6, pose: {
+        rightUpperArm: [-0.1, 0.3, 1.12], rightLowerArm: [-0.2, 1.2, 0], rightHand: [0, 0, 0.3],
+        leftUpperArm: [-0.1, -0.3, -1.12], leftLowerArm: [-0.2, -1.2, 0], leftHand: [0, 0, -0.3] } },
+};
+const GESTOS_HABLA = ['explicar', 'explicarIzquierda', 'abrirManos'];
+
+function lanzarGesto(nombre) {
+    if (GESTOS[nombre]) avatar.gesto = { def: GESTOS[nombre], inicio: clock.elapsedTime };
+}
+
+const suavizar = (x) => x * x * (3 - 2 * x);
+function pesoGesto(t, duracion) {
+    const rampa = 0.5;
+    if (t <= 0 || t >= duracion) return 0;
+    if (t < rampa) return suavizar(t / rampa);
+    if (t > duracion - rampa) return suavizar((duracion - t) / rampa);
+    return 1;
+}
+
+// Expuesto para depuración desde la consola del navegador
+window.ariaAvatar = { gesto: lanzarGesto, estado: setEstadoAvatar };
 
 function animate() {
     requestAnimationFrame(animate);
-    const deltaTime = clock.getDelta();
+    const deltaTime = Math.min(clock.getDelta(), 0.1);
     const time = clock.elapsedTime; // Tiempo global
 
     if (currentVrm) {
-        currentVrm.update(deltaTime);
+        const hueso = (nombre) => currentVrm.humanoid.getNormalizedBoneNode(nombre);
+        const t = time - avatar.desde; // tiempo en el estado actual
 
-        // 1. Parpadeo Natural Orgánico
-        if (time > nextBlinkTime) {
-            currentVrm.expressionManager.setValue('blink', 1.0);
-            setTimeout(() => {
-                if (currentVrm) currentVrm.expressionManager.setValue('blink', 0.0);
-            }, 150); // Cierra los ojos por 150ms
-            nextBlinkTime = time + 2 + Math.random() * 4; // Siguiente parpadeo en 2 a 6 segundos
-        }
-
-        // 2. Movimiento Corporal Orgánico (Respiración y Balanceo)
-        const spine = currentVrm.humanoid.getNormalizedBoneNode('spine');
-        const head = currentVrm.humanoid.getNormalizedBoneNode('head');
-        if (spine) {
-            spine.rotation.x = Math.sin(time * 1.5) * 0.015; // Pecho inflándose (respiración)
-            spine.rotation.y = Math.sin(time * 0.7) * 0.02;  // Balanceo del torso
-        }
-        // Offset para centrar la mirada en la nariz en vez del centro de la pantalla
-        const offsetX = 0.0;
-        const offsetY = 0.55; // Nivel de la cara en la ventana (ajusta si es necesario)
-
-        if (head) {
-            // Mirar al frente (sin seguimiento del ratón) + balanceo natural
-            const targetHeadY = Math.sin(time * 0.7) * 0.01;
-            const targetHeadX = 0;
-            
-            head.rotation.y += (targetHeadY - head.rotation.y) * 0.1;
-            head.rotation.x += (targetHeadX - head.rotation.x) * 0.1;
-            head.rotation.z = Math.cos(time * 0.5) * 0.01;   // Ligero ladeo de la cabeza
-        }
-        
-        // 2.5 Ojos siguiendo el ratón
-        const leftEye = currentVrm.humanoid.getNormalizedBoneNode('leftEye');
-        const rightEye = currentVrm.humanoid.getNormalizedBoneNode('rightEye');
-        if (leftEye && rightEye) {
-            // Mirar al frente (sin seguimiento del ratón)
-            const targetEyeY = 0;
-            const targetEyeX = 0;
-            
-            leftEye.rotation.y += (targetEyeY - leftEye.rotation.y) * 0.2;
-            leftEye.rotation.x += (targetEyeX - leftEye.rotation.x) * 0.2;
-            rightEye.rotation.y += (targetEyeY - rightEye.rotation.y) * 0.2;
-            rightEye.rotation.x += (targetEyeX - rightEye.rotation.x) * 0.2;
-        }
-
-        // 3. Lip-Sync Suavizado (Sin afectar los ojos)
-        // Eliminamos 'happy' y 'ih' porque en algunos modelos VRM están vinculados a los párpados
-        let targetMouthOpen = 0;
+        // 0. Energía de la voz (alimenta la boca, los asentimientos y los gestos)
+        let volumen = 0;
         if (analyser && dataArray && isSpeaking) {
             analyser.getByteFrequencyData(dataArray);
-            let volume = 0;
-            for (let i = 0; i < dataArray.length; i++) {
-                volume += dataArray[i];
-            }
-            volume = volume / dataArray.length; // Promedio
+            let suma = 0;
+            for (let i = 0; i < dataArray.length; i++) suma += dataArray[i];
+            volumen = suma / dataArray.length;
+        }
+        volumenVoz += (Math.min(volumen / 40, 1) - volumenVoz) * 0.2;
 
-            // Si hay volumen, calculamos la apertura de forma no lineal
-            if (volume > 2) {
-                targetMouthOpen = Math.min((volume / 40) * 1.2, 0.9);
+        // 1. Parpadeo natural, a veces doble
+        if (time > nextBlinkTime) {
+            currentVrm.expressionManager.setValue('blink', 1.0);
+            setTimeout(() => { if (currentVrm) currentVrm.expressionManager.setValue('blink', 0.0); }, 130);
+            if (Math.random() < 0.2) {
+                setTimeout(() => { if (currentVrm) currentVrm.expressionManager.setValue('blink', 1.0); }, 260);
+                setTimeout(() => { if (currentVrm) currentVrm.expressionManager.setValue('blink', 0.0); }, 380);
             }
+            nextBlinkTime = time + 2 + Math.random() * 4;
         }
 
-        // Suavizado matemático (Lerp) para quitar el temblor robótico
-        currentMouthOpen += (targetMouthOpen - currentMouthOpen) * 0.35;
+        // 2. Mirada viva: pequeños cambios de foco; al pensar mira hacia arriba y a un lado
+        if (time > avatar.proximaMirada) {
+            if (avatar.estado === 'pensando') {
+                avatar.objetivoMirada = { x: -0.12, y: 0.18 * (Math.random() < 0.5 ? -1 : 1) };
+                avatar.proximaMirada = time + 1.5 + Math.random();
+            } else if (avatar.estado === 'escuchando' || Math.random() < 0.55) {
+                avatar.objetivoMirada = { x: 0, y: 0 }; // mirar al usuario
+                avatar.proximaMirada = time + 1.5 + Math.random() * 2.5;
+            } else {
+                avatar.objetivoMirada = { x: (Math.random() - 0.5) * 0.08, y: (Math.random() - 0.5) * 0.22 };
+                avatar.proximaMirada = time + 0.8 + Math.random() * 1.5;
+            }
+        }
+        avatar.mirada.x += (avatar.objetivoMirada.x - avatar.mirada.x) * 0.12;
+        avatar.mirada.y += (avatar.objetivoMirada.y - avatar.mirada.y) * 0.12;
+        const leftEye = hueso('leftEye');
+        const rightEye = hueso('rightEye');
+        if (leftEye && rightEye) {
+            leftEye.rotation.set(avatar.mirada.x, avatar.mirada.y, 0);
+            rightEye.rotation.set(avatar.mirada.x, avatar.mirada.y, 0);
+        }
 
-        // Solo usamos vocales directas para evitar deformar los ojos
-        currentVrm.expressionManager.setValue('aa', currentMouthOpen * 0.85);
-        currentVrm.expressionManager.setValue('ou', currentMouthOpen * 0.15); // Un toque de redondez
-        
-        // 4. Movimiento Orgánico de Brazos y Ropa (SpringBones)
-        const leftUpperArm = currentVrm.humanoid.getNormalizedBoneNode('leftUpperArm');
-        const rightUpperArm = currentVrm.humanoid.getNormalizedBoneNode('rightUpperArm');
-        const leftLowerArm = currentVrm.humanoid.getNormalizedBoneNode('leftLowerArm');
-        const rightLowerArm = currentVrm.humanoid.getNormalizedBoneNode('rightLowerArm');
-        const hips = currentVrm.humanoid.getNormalizedBoneNode('hips');
-
+        // 3. Cuerpo: respiración, cambio de peso y postura según el estado
+        const spine = hueso('spine');
+        const chest = hueso('chest');
+        const neck = hueso('neck');
+        const head = hueso('head');
+        const hips = hueso('hips');
+        const inclinacion = avatar.estado === 'escuchando' ? 0.035 : 0; // se inclina hacia el usuario
         if (hips) {
-            // Balanceo pélvico sutil para forzar a que las físicas (SpringBones) de la ropa se muevan continuamente
             hips.rotation.y = Math.sin(time * 0.8) * 0.03;
-            hips.rotation.z = Math.cos(time * 0.6) * 0.015;
-            // (Eliminamos la modificación de hips.position.y para no arruinar la altura natural del VRM)
+            hips.rotation.z = Math.sin(time * 0.25) * 0.025 + Math.cos(time * 0.6) * 0.01; // cambio de peso lento
+        }
+        if (spine) {
+            spine.rotation.x = Math.sin(time * 1.5) * 0.015 + inclinacion;
+            spine.rotation.y = Math.sin(time * 0.7) * 0.02;
+            spine.rotation.z = -Math.sin(time * 0.25) * 0.02; // compensa el cambio de peso
+        }
+        if (chest) chest.rotation.x = Math.sin(time * 1.5 + 0.4) * 0.012;
+
+        if (head) {
+            let objX = avatar.mirada.x * 0.35;
+            let objY = avatar.mirada.y * 0.45 + Math.sin(time * 0.7) * 0.015;
+            let objZ = Math.cos(time * 0.5) * 0.015;
+            if (avatar.estado === 'escuchando') { objZ += 0.09; objX += 0.04; } // inclina la cabeza al escuchar
+            if (avatar.estado === 'pensando') { objZ -= 0.06; }
+            if (avatar.estado === 'hablando') {
+                objX += Math.sin(time * 6.5) * 0.035 * volumenVoz + volumenVoz * 0.02; // asiente al ritmo de la voz
+                objZ += Math.sin(time * 1.3) * 0.03;
+            }
+            head.rotation.x += (objX - head.rotation.x) * 0.12;
+            head.rotation.y += (objY - head.rotation.y) * 0.12;
+            head.rotation.z += (objZ - head.rotation.z) * 0.08;
+        }
+        if (neck && head) neck.rotation.y = head.rotation.y * 0.4;
+
+        // 4. Boca (lip-sync suavizado)
+        const objetivoBoca = volumen > 2 ? Math.min((volumen / 40) * 1.2, 0.9) : 0;
+        currentMouthOpen += (objetivoBoca - currentMouthOpen) * 0.35;
+        currentVrm.expressionManager.setValue('aa', currentMouthOpen * 0.85);
+        currentVrm.expressionManager.setValue('ou', currentMouthOpen * 0.15);
+
+        // 5. Brazos: pose base + respiración + gesto activo
+        if (avatar.estado === 'hablando' && !avatar.gesto && time > avatar.proximoGesto && volumenVoz > 0.15) {
+            lanzarGesto(GESTOS_HABLA[Math.floor(Math.random() * GESTOS_HABLA.length)]);
+            avatar.proximoGesto = time + 3 + Math.random() * 2.5;
+        }
+        let pesoActivo = 0;
+        if (avatar.gesto) {
+            const tg = time - avatar.gesto.inicio;
+            pesoActivo = pesoGesto(tg, avatar.gesto.def.duracion);
+            if (tg >= avatar.gesto.def.duracion) avatar.gesto = null;
+        }
+        for (const [nombre, base] of Object.entries(POSE_BASE)) {
+            const nodo = hueso(nombre);
+            if (!nodo) continue;
+            const rot = [...base];
+            if (nombre.endsWith('UpperArm')) {
+                const lado = nombre.startsWith('left') ? 1 : -1;
+                rot[0] += Math.sin(time * 1.5) * 0.02;
+                rot[2] += lado * Math.sin(time * 1.2) * 0.03;
+            } else if (nombre.endsWith('LowerArm')) {
+                rot[0] += Math.sin(time * 0.9) * 0.04;
+            }
+            const g = avatar.gesto && avatar.gesto.def.pose[nombre];
+            if (g && pesoActivo > 0) {
+                for (let i = 0; i < 3; i++) rot[i] += (g[i] - rot[i]) * pesoActivo;
+                const osc = avatar.gesto.def.oscilar;
+                if (osc && osc.hueso === nombre) {
+                    rot[osc.eje] += Math.sin((time - avatar.gesto.inicio) * osc.frecuencia * Math.PI * 2) * osc.amplitud * pesoActivo;
+                }
+            }
+            nodo.rotation.set(rot[0], rot[1], rot[2]);
         }
 
-        if (leftUpperArm && rightUpperArm) {
-            // Respiración natural reflejada en hombros y brazos
-            leftUpperArm.rotation.x = 0.1 + Math.sin(time * 1.5) * 0.02;
-            rightUpperArm.rotation.x = 0.1 + Math.cos(time * 1.5) * 0.02;
-            leftUpperArm.rotation.z = -1.25 + Math.sin(time * 1.2) * 0.03;
-            rightUpperArm.rotation.z = 1.25 + Math.cos(time * 1.2) * 0.03;
-            
-            if (leftLowerArm && rightLowerArm) {
-                // Relajación de codos oscilante
-                leftLowerArm.rotation.x = -0.25 + Math.sin(time * 0.9) * 0.04;
-                rightLowerArm.rotation.x = -0.25 + Math.cos(time * 0.9) * 0.04;
-            }
-        }
+        currentVrm.update(deltaTime);
     }
 
     // Enfocar cámara al nivel del pecho/abdomen superior
-    // Se bajó a 0.8 para centrar el cuerpo y no cortar la cintura
     camera.lookAt(0, 1.2, 0);
     renderer.render(scene, camera);
 }
@@ -346,6 +421,7 @@ async function responder(texto) {
 async function sendMessage(textToSend = null) {
     const text = textToSend !== null ? textToSend : userInput.value.trim();
     if (!text) return;
+    setEstadoAvatar('pensando');
 
     if (currentMode === "chat") {
         addMessage(text, true);
@@ -360,6 +436,7 @@ async function sendMessage(textToSend = null) {
     try {
         await responder(text);
     } catch (error) {
+        setEstadoAvatar('reposo');
         if (currentMode === "chat") {
             removeLoading();
             addMessage('Error: ' + (error.message || 'Problema de conexión.'));
@@ -372,6 +449,7 @@ async function sendMessage(textToSend = null) {
 
 // Enviar evento invisible al chat
 async function sendHiddenEvent(hiddenPrompt) {
+    setEstadoAvatar('pensando');
     if (currentMode === "chat") showLoading();
     try {
         await responder(hiddenPrompt);
@@ -383,6 +461,100 @@ sendBtn.addEventListener('click', () => sendMessage(null));
 userInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') sendMessage(null);
 });
+
+// ==========================================
+// Subtítulos: frases cortas con resaltado palabra a palabra sincronizado con el audio
+// ==========================================
+const subtitulos = (() => {
+    const contenedor = document.getElementById('subtitles-container');
+    const caja = document.getElementById('subtitles-text');
+    const MAX_CARACTERES = 70; // longitud máxima de cada frase en pantalla
+    let frases = [];
+    let audio = null;
+    let frameId = null;
+    let fraseActual = -1;
+
+    // Divide el texto en frases cortas, cortando preferentemente en signos de puntuación.
+    // Cada palabra recibe un instante de inicio proporcional a su longitud, con pausas extra tras la puntuación.
+    function preparar(texto) {
+        const palabras = texto.replace(/\s+/g, ' ').trim().split(' ').filter(Boolean);
+        const pesos = palabras.map(p => p.length + 1 + (/[.!?…:]$/.test(p) ? 6 : /[,;]$/.test(p) ? 3 : 0));
+        const total = pesos.reduce((a, b) => a + b, 0) || 1;
+        let acumulado = 0;
+        const items = palabras.map((p, i) => {
+            const item = { texto: p, inicio: acumulado / total };
+            acumulado += pesos[i];
+            return item;
+        });
+        frases = [];
+        let actual = [];
+        let largo = 0;
+        items.forEach((item, i) => {
+            actual.push(item);
+            largo += item.texto.length + 1;
+            const finDeOracion = /[.!?…:;,]$/.test(item.texto);
+            if (largo >= MAX_CARACTERES || (finDeOracion && largo > 28) || i === items.length - 1) {
+                frases.push({ palabras: actual, inicio: actual[0].inicio });
+                actual = [];
+                largo = 0;
+            }
+        });
+    }
+
+    function mostrarFrase(indice) {
+        fraseActual = indice;
+        caja.classList.remove('entrando');
+        caja.innerHTML = '';
+        frases[indice].palabras.forEach((p, i) => {
+            const span = document.createElement('span');
+            span.className = 'sub-palabra';
+            span.textContent = p.texto;
+            caja.appendChild(span);
+            if (i < frases[indice].palabras.length - 1) caja.appendChild(document.createTextNode(' '));
+        });
+        void caja.offsetWidth; // reinicia la animación de entrada
+        caja.classList.add('entrando');
+    }
+
+    function actualizar() {
+        if (!audio) return;
+        if (audio.duration && isFinite(audio.duration)) {
+            const progreso = audio.currentTime / audio.duration;
+            let indice = 0;
+            while (indice + 1 < frases.length && frases[indice + 1].inicio <= progreso) indice++;
+            if (indice !== fraseActual) mostrarFrase(indice);
+            const spans = caja.querySelectorAll('.sub-palabra');
+            frases[indice].palabras.forEach((p, i) => {
+                const dicha = p.inicio <= progreso;
+                const siguiente = frases[indice].palabras[i + 1];
+                const actual = dicha && (!siguiente || siguiente.inicio > progreso);
+                spans[i].classList.toggle('dicha', dicha);
+                spans[i].classList.toggle('actual', actual);
+            });
+        }
+        frameId = requestAnimationFrame(actualizar);
+    }
+
+    return {
+        iniciar(texto, audioActual) {
+            if (!contenedor || !caja) return;
+            this.detener(false);
+            preparar(texto.replace(/[*#_]/g, ''));
+            if (!frases.length) return;
+            audio = audioActual;
+            mostrarFrase(0);
+            if (subtitlesEnabled) contenedor.classList.remove('hidden');
+            frameId = requestAnimationFrame(actualizar);
+        },
+        detener(ocultar = true) {
+            if (frameId) cancelAnimationFrame(frameId);
+            frameId = null;
+            audio = null;
+            fraseActual = -1;
+            if (ocultar && contenedor) contenedor.classList.add('hidden');
+        },
+    };
+})();
 
 // 2.1 Text-to-Speech Sincronizado (El VRM Habla)
 async function speakTextAndShow(text, yaMostrado = false) {
@@ -419,6 +591,7 @@ async function speakTextAndShow(text, yaMostrado = false) {
         });
 
         if (!response.ok) {
+            setEstadoAvatar('reposo');
             if (currentMode === "chat") {
                 removeLoading();
                 if (!yaMostrado) addMessage(text, false);
@@ -445,43 +618,23 @@ async function speakTextAndShow(text, yaMostrado = false) {
         source.connect(analyser);
         analyser.connect(audioContext.destination);
 
-        let subtitleInterval = null;
-        const subsOverlay = document.getElementById('subtitles-container');
-        const subsText = document.getElementById('subtitles-text');
-
-        audio.onplay = () => { 
-            isSpeaking = true; 
+        audio.onplay = () => {
+            isSpeaking = true;
+            setEstadoAvatar('hablando');
             if (currentMode === "conversational") {
                 document.getElementById('convStatus').textContent = "Aria está hablando...";
-                
-                // Lógica dinámica de subtítulos
-                if (subsOverlay && subsText) {
-                    if (subtitlesEnabled) {
-                        subsOverlay.classList.remove('hidden');
-                    }
-                    const words = text.split(" ");
-                    subsText.innerText = words[0] || text;
-                    if (words.length > 1) {
-                        subtitleInterval = setInterval(() => {
-                            if (!audio.duration) return;
-                            const progress = audio.currentTime / audio.duration;
-                            const wordIndex = Math.floor(progress * words.length);
-                            const startIdx = Math.max(0, wordIndex - 14); // Máximo 15 palabras simultáneas
-                            subsText.innerText = words.slice(startIdx, wordIndex + 1).join(" ");
-                        }, 100);
-                    }
-                }
+                subtitulos.iniciar(text, audio);
             }
         };
         audio.onended = () => {
             isSpeaking = false;
+            setEstadoAvatar('reposo');
             if (currentVrm) {
                 currentVrm.expressionManager.setValue('aa', 0);
                 currentVrm.expressionManager.setValue('happy', 0);
             }
-            if (subtitleInterval) clearInterval(subtitleInterval);
-            if (subsOverlay) subsOverlay.classList.add('hidden');
-            
+            subtitulos.detener();
+
             if (currentMode === "conversational") {
                 document.getElementById('convStatus').textContent = "Toca el micrófono para hablar con Aria";
                 document.getElementById('convWaves').classList.remove('active');
@@ -497,6 +650,7 @@ async function speakTextAndShow(text, yaMostrado = false) {
 
     } catch (err) {
         console.error("Error conectando con la voz neuronal:", err);
+        setEstadoAvatar('reposo');
         if (currentMode === "chat") {
             removeLoading();
             if (!yaMostrado) addMessage(text, false);
@@ -528,6 +682,7 @@ async function startRecording() {
 
         mediaRecorder.onstart = () => {
             isRecordingAudio = true;
+            setEstadoAvatar('escuchando');
             if (currentMode === "chat") {
                 micBtn.classList.add('recording');
                 userInput.placeholder = "Escuchando...";
@@ -540,6 +695,7 @@ async function startRecording() {
 
         mediaRecorder.onstop = async () => {
             isRecordingAudio = false;
+            setEstadoAvatar('pensando');
             // Detener el uso del micrófono
             mediaRecorder.stream.getTracks().forEach(t => t.stop());
 
@@ -593,6 +749,7 @@ async function sendAudioToBackend(audioBlob) {
                 sendMessage(text);
             }
         } else {
+            setEstadoAvatar('reposo');
             if (currentMode === "chat") {
                 userInput.placeholder = "No se detectó voz.";
             } else {
@@ -601,6 +758,7 @@ async function sendAudioToBackend(audioBlob) {
         }
     } catch (error) {
         console.error("Error transcribiendo el audio:", error);
+        setEstadoAvatar('reposo');
         alert("Error al transcribir el audio. ¿Está configurado Groq en el .env?");
         if (currentMode === "chat") {
             userInput.placeholder = "Escribe o presiona el micrófono...";
@@ -805,6 +963,7 @@ ws.onmessage = (event) => {
     const statusIndicator = document.getElementById('statusIndicator');
 
     if (action === "person_arrived") {
+        lanzarGesto('saludo');
         if (statusIndicator) {
             statusIndicator.classList.remove('inactive');
             statusIndicator.classList.add('active');
@@ -861,47 +1020,113 @@ window.askSuggestion = function(btn) {
     if (sendBtn) sendBtn.click();
 };
 
-// Carrusel automático infinito para las sugerencias
-document.addEventListener('DOMContentLoaded', () => {
-    const cloud = document.querySelector('.suggestion-cloud');
-    if (cloud) {
-        let isHovered = false;
-        // Pausar al pasar el ratón para poder leer y dar clic
-        cloud.addEventListener('mouseenter', () => isHovered = true);
-        cloud.addEventListener('mouseleave', () => isHovered = false);
-        
-        const originalWidth = cloud.scrollWidth;
-        
-        // Clonar las burbujas para lograr un loop infinito transparente
-        const bubbles = Array.from(cloud.querySelectorAll('.suggestion-bubble'));
-        // Clonamos múltiples veces para asegurarnos de que haya suficiente espacio para hacer scroll
-        for (let i = 0; i < 4; i++) {
-            bubbles.forEach(bubble => {
-                const clone = bubble.cloneNode(true);
-                cloud.appendChild(clone);
-            });
-        }
+// ==========================================
+// Carrusel infinito de preguntas sugeridas
+// Se desplaza con transform (sin scrollLeft), admite flechas, arrastre y pausa al pasar el cursor.
+// ==========================================
+(function iniciarCarrusel() {
+    const viewport = document.getElementById('suggestionViewport');
+    const track = document.getElementById('suggestionTrack');
+    if (!viewport || !track) return;
 
-        // Mover 1 pixel cada 30ms (ritmo legible)
-        setInterval(() => {
-            if (!isHovered) {
-                cloud.scrollLeft += 1;
-                // Usar originalWidth como punto de reinicio para que el loop sea perfectamente continuo
-                if (cloud.scrollLeft >= originalWidth) {
-                    cloud.scrollLeft -= originalWidth;
-                }
+    const originales = Array.from(track.children);
+    if (!originales.length) return;
+    originales.forEach(b => {
+        const copia = b.cloneNode(true);
+        copia.setAttribute('aria-hidden', 'true');
+        copia.tabIndex = -1;
+        track.appendChild(copia);
+    });
+
+    const VELOCIDAD = 32; // px por segundo
+    const movimientoReducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let anchoSerie = 0;      // ancho de una serie completa de preguntas (incluye el espacio entre ellas)
+    let desplazamiento = 0;  // posición actual en px
+    let objetivo = null;     // destino al usar las flechas
+    let pausado = false;
+    let arrastre = null;
+    let ultimo = performance.now();
+
+    const medir = () => {
+        anchoSerie = track.children[originales.length].offsetLeft - originales[0].offsetLeft;
+    };
+    const paso = () => {
+        const estilo = getComputedStyle(track);
+        return originales[0].offsetWidth + (parseFloat(estilo.columnGap) || 12);
+    };
+    const normalizar = () => {
+        if (anchoSerie <= 0) return;
+        while (desplazamiento >= anchoSerie) { desplazamiento -= anchoSerie; if (objetivo !== null) objetivo -= anchoSerie; }
+        while (desplazamiento < 0) { desplazamiento += anchoSerie; if (objetivo !== null) objetivo += anchoSerie; }
+    };
+
+    function cuadro(ahora) {
+        const dt = Math.min((ahora - ultimo) / 1000, 0.1);
+        ultimo = ahora;
+        if (!arrastre) {
+            if (objetivo !== null) {
+                desplazamiento += (objetivo - desplazamiento) * Math.min(1, dt * 7);
+                if (Math.abs(objetivo - desplazamiento) < 0.5) { desplazamiento = objetivo; objetivo = null; }
+            } else if (!pausado && !movimientoReducido && !document.hidden) {
+                desplazamiento += VELOCIDAD * dt;
             }
-        }, 30);
+        }
+        normalizar();
+        track.style.transform = `translate3d(${-desplazamiento}px, 0, 0)`;
+        requestAnimationFrame(cuadro);
     }
 
-    // Verificar el rol del usuario actual para mostrar/ocultar el botón de Admin
-    fetch('/api/me')
-        .then(res => res.json())
-        .then(data => {
-            if (data && data.is_admin) {
-                const adminBtn = document.getElementById('adminBtn');
-                if (adminBtn) adminBtn.style.display = 'inline-flex';
-            }
-        })
-        .catch(err => console.error("Error verificando rol:", err));
-});
+    // Flechas: avanzan o retroceden una pregunta con desplazamiento suave
+    const mover = (direccion) => { objetivo = (objetivo ?? desplazamiento) + direccion * paso(); };
+    document.getElementById('sugPrev')?.addEventListener('click', () => mover(-1));
+    document.getElementById('sugNext')?.addEventListener('click', () => mover(1));
+
+    // Pausa al pasar el ratón o al navegar con el teclado
+    viewport.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') pausado = true; });
+    viewport.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') pausado = false; });
+    viewport.addEventListener('focusin', () => { pausado = true; });
+    viewport.addEventListener('focusout', () => { pausado = false; });
+
+    // Arrastre con el dedo o el ratón; un arrastre no dispara la pregunta
+    viewport.addEventListener('pointerdown', (e) => {
+        arrastre = { x: e.clientX, inicio: desplazamiento, movido: false, id: e.pointerId };
+        objetivo = null;
+    });
+    window.addEventListener('pointermove', (e) => {
+        if (!arrastre || e.pointerId !== arrastre.id) return;
+        const dx = e.clientX - arrastre.x;
+        if (Math.abs(dx) > 6 && !arrastre.movido) {
+            arrastre.movido = true;
+            viewport.setPointerCapture(e.pointerId);
+            viewport.classList.add('arrastrando');
+        }
+        if (arrastre.movido) desplazamiento = arrastre.inicio - dx;
+    });
+    const soltar = (e) => {
+        if (!arrastre || e.pointerId !== arrastre.id) return;
+        if (arrastre.movido) {
+            const bloquearClic = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
+            viewport.addEventListener('click', bloquearClic, { capture: true, once: true });
+            setTimeout(() => viewport.removeEventListener('click', bloquearClic, { capture: true }), 0);
+        }
+        viewport.classList.remove('arrastrando');
+        arrastre = null;
+    };
+    window.addEventListener('pointerup', soltar);
+    window.addEventListener('pointercancel', soltar);
+
+    medir();
+    new ResizeObserver(medir).observe(track);
+    requestAnimationFrame(cuadro);
+})();
+
+// Verificar el rol del usuario actual para mostrar/ocultar el botón de Admin
+fetch('/api/me')
+    .then(res => res.json())
+    .then(data => {
+        if (data && data.is_admin) {
+            const adminBtn = document.getElementById('adminBtn');
+            if (adminBtn) adminBtn.style.display = 'inline-flex';
+        }
+    })
+    .catch(err => console.error("Error verificando rol:", err));
