@@ -120,11 +120,11 @@ let nextBlinkTime = 0; // Para el parpadeo aleatorio
 
 // ==========================================
 // 1.1 Animador del avatar
-// Cada articulación persigue su objetivo con un resorte amortiguado (inercia natural),
-// el reposo usa ruido suave en lugar de ondas perfectas y los gestos tienen variación.
+// Cada articulación persigue su objetivo con un resorte amortiguado (inercia natural)
+// y el reposo usa ruido suave en lugar de ondas perfectas.
 // ==========================================
 // Estados: 'reposo' | 'escuchando' | 'pensando' | 'hablando'
-const avatar = { estado: 'reposo', desde: 0, gesto: null, proximoGesto: 0, mirada: { x: 0, y: 0 }, objetivoMirada: { x: 0, y: 0 }, proximaMirada: 0 };
+const avatar = { estado: 'reposo', desde: 0, mirada: { x: 0, y: 0 }, objetivoMirada: { x: 0, y: 0 }, proximaMirada: 0 };
 
 // Ruido suave: suma de senos con frecuencias no múltiplas (no se percibe como un ciclo)
 const ruido = (t, semilla) => Math.sin(t * 0.37 + semilla) * 0.5 + Math.sin(t * 0.83 + semilla * 1.7) * 0.3 + Math.sin(t * 1.61 + semilla * 2.3) * 0.2;
@@ -154,59 +154,11 @@ const POSE_BASE = {
     leftHand: [0, 0, 0], rightHand: [0, 0, 0],
 };
 
-// Gestos: pose objetivo por hueso, apertura de las manos (0 = relajada, 1 = abierta)
-// y, opcionalmente, una oscilación. 'mantener' los deja activos mientras dure el estado.
-const GESTOS = {
-    saludo: { duracion: 3.0, manos: { right: 1 }, pose: {
-        rightUpperArm: [0.0, 0.35, 0.35], rightLowerArm: [-0.6, 0.2, -1.75], rightHand: [0, 0, -0.1] },
-        oscilar: { hueso: 'rightLowerArm', eje: 2, amplitud: 0.28, frecuencia: 2.2 } },
-    explicar: { duracion: 2.4, manos: { right: 0.85 }, pose: {
-        rightUpperArm: [-0.35, 0.35, 1.05], rightLowerArm: [-0.2, 1.7, 0], rightHand: [0, 0, 0.15] } },
-    explicarIzquierda: { duracion: 2.4, manos: { left: 0.85 }, pose: {
-        leftUpperArm: [-0.35, -0.35, -1.05], leftLowerArm: [-0.2, -1.7, 0], leftHand: [0, 0, -0.15] } },
-    abrirManos: { duracion: 2.6, manos: { right: 1, left: 1 }, pose: {
-        rightUpperArm: [-0.3, 0.3, 1.1], rightLowerArm: [-0.2, 1.55, 0], rightHand: [0, 0, 0.3],
-        leftUpperArm: [-0.3, -0.3, -1.1], leftLowerArm: [-0.2, -1.55, 0], leftHand: [0, 0, -0.3] } },
-    senalar: { duracion: 2.0, manos: { right: 0.6 }, pose: {
-        rightUpperArm: [-0.4, 0.5, 1.0], rightLowerArm: [-0.2, 1.85, 0], rightHand: [0, 0, 0.1] } },
-    // Pensar: mano bajo el mentón, mantenida mientras dura el estado
-    pensar: { mantener: true, manos: { right: 0.35 }, pose: {
-        rightUpperArm: [-0.9, 0.9, 1.1], rightLowerArm: [-0.3, 2.5, 0], rightHand: [0, 0.3, 0.5],
-        leftUpperArm: [-0.15, -0.35, -1.15], leftLowerArm: [-0.3, -1.35, 0], leftHand: [0, 0, -0.2] } },
-};
-const GESTOS_HABLA = ['explicar', 'explicarIzquierda', 'abrirManos', 'senalar'];
-
-function lanzarGesto(nombre, variacion = true) {
-    const def = GESTOS[nombre];
-    if (!def) return;
-    avatar.gesto = {
-        nombre, def, inicio: clock.elapsedTime, fin: null,
-        duracion: def.mantener ? Infinity : def.duracion * (variacion ? 0.85 + Math.random() * 0.35 : 1),
-        intensidad: variacion ? 0.75 + Math.random() * 0.25 : 1,
-    };
-}
-function soltarGesto() {
-    if (avatar.gesto && avatar.gesto.duracion === Infinity) {
-        avatar.gesto.duracion = clock.elapsedTime - avatar.gesto.inicio + 0.7;
-    }
-}
-
 function setEstadoAvatar(estado) {
     if (avatar.estado === estado) return;
-    if (avatar.estado === 'pensando') soltarGesto();
     avatar.estado = estado;
     avatar.desde = clock.elapsedTime;
-    avatar.proximoGesto = clock.elapsedTime + 0.4 + Math.random() * 0.6;
     avatar.proximaMirada = 0;
-    if (estado === 'pensando') setTimeout(() => { if (avatar.estado === 'pensando') lanzarGesto('pensar', false); }, 350);
-}
-
-function pesoGesto(g, t) {
-    const entrada = 0.55, salida = 0.7;
-    if (t <= 0 || t >= g.duracion) return 0;
-    if (t < entrada) return suavizar(t / entrada);
-    if (t > g.duracion - salida) return suavizar((g.duracion - t) / salida);
-    return 1;
 }
 
 // ==========================================
@@ -272,7 +224,7 @@ const labios = {
 };
 
 // Expuesto para depuración desde la consola del navegador
-window.ariaAvatar = { gesto: lanzarGesto, estado: setEstadoAvatar, vrm: () => currentVrm, definir: (nombre, def) => { GESTOS[nombre] = def; } };
+window.ariaAvatar = { estado: setEstadoAvatar, vrm: () => currentVrm };
 
 function animate() {
     requestAnimationFrame(animate);
@@ -354,23 +306,7 @@ function animate() {
             if (neck) neck.rotation.y = head.rotation.y * 0.35;
         }
 
-        // 4. Gestos al hablar, con variación de forma, duración e intensidad
-        if (avatar.estado === 'hablando' && !avatar.gesto && time > avatar.proximoGesto && voz > 0.12) {
-            const opciones = GESTOS_HABLA.filter(n => n !== avatar.ultimoGesto);
-            const nombre = opciones[Math.floor(Math.random() * opciones.length)];
-            avatar.ultimoGesto = nombre;
-            lanzarGesto(nombre);
-            avatar.proximoGesto = time + 2.5 + Math.random() * 3;
-        }
-        let peso = 0;
-        const g = avatar.gesto;
-        if (g) {
-            const tg = time - g.inicio;
-            peso = pesoGesto(g, tg) * g.intensidad;
-            if (tg >= g.duracion) avatar.gesto = null;
-        }
-
-        // 5. Brazos y manos: objetivo = reposo con ruido + gesto; el resorte da la inercia
+        // 4. Brazos abajo con un vaivén leve, como una persona de pie; el resorte da la inercia
         for (const [nombre, base] of Object.entries(POSE_BASE)) {
             const nodo = hueso(nombre);
             if (!nodo) continue;
@@ -386,16 +322,6 @@ function animate() {
             } else {
                 obj[2] += ruido(time * 0.7, semilla) * 0.05;
             }
-            const pose = g && g.def.pose[nombre];
-            if (pose && peso > 0) {
-                for (let i = 0; i < 3; i++) obj[i] += (pose[i] - obj[i]) * peso;
-                const osc = g.def.oscilar;
-                if (osc && osc.hueso === nombre) {
-                    obj[osc.eje] += Math.sin((time - g.inicio) * osc.frecuencia * Math.PI * 2) * osc.amplitud * peso;
-                }
-            }
-            // Movimientos de acento mientras habla: el antebrazo del gesto sube con las sílabas fuertes
-            if (pose && tipo === 'LowerArm' && avatar.estado === 'hablando') obj[1] += -lado * voz * 0.12 * peso;
             const k = RIGIDEZ[tipo];
             nodo.rotation.set(
                 resorte(nombre + '.x', obj[0], k, deltaTime),
@@ -403,27 +329,20 @@ function animate() {
                 resorte(nombre + '.z', obj[2], k, deltaTime));
         }
 
-        // 6. Dedos: relajados en reposo, se abren en los gestos, con micromovimiento independiente
+        // 5. Dedos relajados con micromovimiento independiente
         for (const lado of ['left', 'right']) {
             const signo = lado === 'left' ? -1 : 1;
-            const apertura = g && g.def.manos && g.def.manos[lado] ? g.def.manos[lado] * peso : 0;
             ['Index', 'Middle', 'Ring', 'Little'].forEach((dedo, i) => {
-                const relajado = 0.32 + i * 0.07 + ruido(time * 0.8, i * 3 + (lado === 'left' ? 0 : 50)) * 0.06;
-                const abierto = 0.06 + i * 0.03;
-                const curva = relajado + (abierto - relajado) * apertura;
-                const separacion = (i - 1.5) * 0.06 * apertura;
+                const curva = 0.32 + i * 0.07 + ruido(time * 0.8, i * 3 + (lado === 'left' ? 0 : 50)) * 0.06;
                 ['Proximal', 'Intermediate', 'Distal'].forEach((falange, j) => {
                     const nodo = hueso(`${lado}${dedo}${falange}`);
                     if (!nodo) return;
-                    const flexion = resorte(`${lado}${dedo}${falange}`, curva * (1 - j * 0.12), 22, deltaTime);
-                    nodo.rotation.set(0, j === 0 ? signo * separacion : 0, signo * flexion);
+                    nodo.rotation.set(0, 0, signo * resorte(`${lado}${dedo}${falange}`, curva * (1 - j * 0.12), 22, deltaTime));
                 });
             });
             ['Proximal', 'Intermediate', 'Distal'].forEach((falange) => {
                 const nodo = hueso(`${lado}Thumb${falange}`);
-                if (!nodo) return;
-                const y = resorte(`${lado}Thumb${falange}`, signo * (0.3 - apertura * 0.15), 22, deltaTime);
-                nodo.rotation.set(0, y, signo * 0.2);
+                if (nodo) nodo.rotation.set(0, signo * 0.3, signo * 0.2);
             });
         }
 
@@ -1095,7 +1014,6 @@ ws.onmessage = (event) => {
     const statusIndicator = document.getElementById('statusIndicator');
 
     if (action === "person_arrived") {
-        lanzarGesto('saludo');
         if (statusIndicator) {
             statusIndicator.classList.remove('inactive');
             statusIndicator.classList.add('active');
