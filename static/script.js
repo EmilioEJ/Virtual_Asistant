@@ -116,107 +116,201 @@ document.addEventListener('mousemove', (event) => {
 });
 
 const clock = new THREE.Clock();
-let currentMouthOpen = 0; // Para suavizar el movimiento de la boca
 let nextBlinkTime = 0; // Para el parpadeo aleatorio
-let volumenVoz = 0; // Energía del audio suavizada (0 a 1), usada por la boca y los gestos
 
 // ==========================================
-// 1.1 Animador del avatar: estados, mirada y gestos
+// 1.1 Animador del avatar
+// Cada articulación persigue su objetivo con un resorte amortiguado (inercia natural),
+// el reposo usa ruido suave en lugar de ondas perfectas y los gestos tienen variación.
 // ==========================================
 // Estados: 'reposo' | 'escuchando' | 'pensando' | 'hablando'
 const avatar = { estado: 'reposo', desde: 0, gesto: null, proximoGesto: 0, mirada: { x: 0, y: 0 }, objetivoMirada: { x: 0, y: 0 }, proximaMirada: 0 };
 
-function setEstadoAvatar(estado) {
-    if (avatar.estado === estado) return;
-    avatar.estado = estado;
-    avatar.desde = clock.elapsedTime;
-    avatar.proximoGesto = clock.elapsedTime + 0.6;
-    avatar.proximaMirada = 0;
+// Ruido suave: suma de senos con frecuencias no múltiplas (no se percibe como un ciclo)
+const ruido = (t, semilla) => Math.sin(t * 0.37 + semilla) * 0.5 + Math.sin(t * 0.83 + semilla * 1.7) * 0.3 + Math.sin(t * 1.61 + semilla * 2.3) * 0.2;
+const suavizar = (x) => x * x * (3 - 2 * x);
+
+// Resorte críticamente amortiguado por eje (rigidez distinta por articulación = movimiento escalonado)
+const resortes = new Map();
+function resorte(clave, objetivo, rigidez, dt) {
+    let r = resortes.get(clave);
+    if (!r) { r = { pos: objetivo, vel: 0 }; resortes.set(clave, r); }
+    const amortiguacion = 2 * Math.sqrt(rigidez);
+    // Subpasos de 1/60 s: el movimiento es igual aunque el equipo dibuje pocos cuadros por segundo
+    const pasos = Math.max(1, Math.ceil(dt / 0.0167));
+    const h = dt / pasos;
+    for (let i = 0; i < pasos; i++) {
+        r.vel += (rigidez * (objetivo - r.pos) - amortiguacion * r.vel) * h;
+        r.pos += r.vel * h;
+    }
+    return r.pos;
 }
+const RIGIDEZ = { UpperArm: 26, LowerArm: 20, Hand: 16 };
 
 // Pose de reposo de cada hueso [x, y, z]
 const POSE_BASE = {
     leftUpperArm: [0.1, -0.15, -1.25], rightUpperArm: [0.1, 0.15, 1.25],
-    leftLowerArm: [-0.25, -0.1, 0], rightLowerArm: [-0.25, 0.1, 0],
+    leftLowerArm: [-0.25, -0.15, 0], rightLowerArm: [-0.25, 0.15, 0],
     leftHand: [0, 0, 0], rightHand: [0, 0, 0],
 };
 
-// Gestos: pose objetivo por hueso y, opcionalmente, una oscilación (saludo)
+// Gestos: pose objetivo por hueso, apertura de las manos (0 = relajada, 1 = abierta)
+// y, opcionalmente, una oscilación. 'mantener' los deja activos mientras dure el estado.
 const GESTOS = {
-    saludo: { duracion: 3.0, pose: {
+    saludo: { duracion: 3.0, manos: { right: 1 }, pose: {
         rightUpperArm: [0.0, 0.35, 0.35], rightLowerArm: [-0.6, 0.2, -1.75], rightHand: [0, 0, -0.1] },
         oscilar: { hueso: 'rightLowerArm', eje: 2, amplitud: 0.28, frecuencia: 2.2 } },
-    explicar: { duracion: 2.4, pose: {
-        rightUpperArm: [-0.15, 0.35, 1.05], rightLowerArm: [-0.2, 1.35, 0], rightHand: [0, 0, 0.15] } },
-    explicarIzquierda: { duracion: 2.4, pose: {
-        leftUpperArm: [-0.15, -0.35, -1.05], leftLowerArm: [-0.2, -1.35, 0], leftHand: [0, 0, -0.15] } },
-    abrirManos: { duracion: 2.6, pose: {
-        rightUpperArm: [-0.1, 0.3, 1.12], rightLowerArm: [-0.2, 1.2, 0], rightHand: [0, 0, 0.3],
-        leftUpperArm: [-0.1, -0.3, -1.12], leftLowerArm: [-0.2, -1.2, 0], leftHand: [0, 0, -0.3] } },
+    explicar: { duracion: 2.4, manos: { right: 0.85 }, pose: {
+        rightUpperArm: [-0.35, 0.35, 1.05], rightLowerArm: [-0.2, 1.7, 0], rightHand: [0, 0, 0.15] } },
+    explicarIzquierda: { duracion: 2.4, manos: { left: 0.85 }, pose: {
+        leftUpperArm: [-0.35, -0.35, -1.05], leftLowerArm: [-0.2, -1.7, 0], leftHand: [0, 0, -0.15] } },
+    abrirManos: { duracion: 2.6, manos: { right: 1, left: 1 }, pose: {
+        rightUpperArm: [-0.3, 0.3, 1.1], rightLowerArm: [-0.2, 1.55, 0], rightHand: [0, 0, 0.3],
+        leftUpperArm: [-0.3, -0.3, -1.1], leftLowerArm: [-0.2, -1.55, 0], leftHand: [0, 0, -0.3] } },
+    senalar: { duracion: 2.0, manos: { right: 0.6 }, pose: {
+        rightUpperArm: [-0.4, 0.5, 1.0], rightLowerArm: [-0.2, 1.85, 0], rightHand: [0, 0, 0.1] } },
+    // Pensar: mano bajo el mentón, mantenida mientras dura el estado
+    pensar: { mantener: true, manos: { right: 0.35 }, pose: {
+        rightUpperArm: [-0.9, 0.9, 1.1], rightLowerArm: [-0.3, 2.5, 0], rightHand: [0, 0.3, 0.5],
+        leftUpperArm: [-0.15, -0.35, -1.15], leftLowerArm: [-0.3, -1.35, 0], leftHand: [0, 0, -0.2] } },
 };
-const GESTOS_HABLA = ['explicar', 'explicarIzquierda', 'abrirManos'];
+const GESTOS_HABLA = ['explicar', 'explicarIzquierda', 'abrirManos', 'senalar'];
 
-function lanzarGesto(nombre) {
-    if (GESTOS[nombre]) avatar.gesto = { def: GESTOS[nombre], inicio: clock.elapsedTime };
+function lanzarGesto(nombre, variacion = true) {
+    const def = GESTOS[nombre];
+    if (!def) return;
+    avatar.gesto = {
+        nombre, def, inicio: clock.elapsedTime, fin: null,
+        duracion: def.mantener ? Infinity : def.duracion * (variacion ? 0.85 + Math.random() * 0.35 : 1),
+        intensidad: variacion ? 0.75 + Math.random() * 0.25 : 1,
+    };
+}
+function soltarGesto() {
+    if (avatar.gesto && avatar.gesto.duracion === Infinity) {
+        avatar.gesto.duracion = clock.elapsedTime - avatar.gesto.inicio + 0.7;
+    }
 }
 
-const suavizar = (x) => x * x * (3 - 2 * x);
-function pesoGesto(t, duracion) {
-    const rampa = 0.5;
-    if (t <= 0 || t >= duracion) return 0;
-    if (t < rampa) return suavizar(t / rampa);
-    if (t > duracion - rampa) return suavizar((duracion - t) / rampa);
+function setEstadoAvatar(estado) {
+    if (avatar.estado === estado) return;
+    if (avatar.estado === 'pensando') soltarGesto();
+    avatar.estado = estado;
+    avatar.desde = clock.elapsedTime;
+    avatar.proximoGesto = clock.elapsedTime + 0.4 + Math.random() * 0.6;
+    avatar.proximaMirada = 0;
+    if (estado === 'pensando') setTimeout(() => { if (avatar.estado === 'pensando') lanzarGesto('pensar', false); }, 350);
+}
+
+function pesoGesto(g, t) {
+    const entrada = 0.55, salida = 0.7;
+    if (t <= 0 || t >= g.duracion) return 0;
+    if (t < entrada) return suavizar(t / entrada);
+    if (t > g.duracion - salida) return suavizar((g.duracion - t) / salida);
     return 1;
 }
 
+// ==========================================
+// 1.2 Lip-sync: forma de la boca según las vocales del texto, apertura según el volumen real
+// En español la escritura es casi fonética: a, e, i, o, u -> visemas aa, ee, ih, oh, ou;
+// m, b y p cierran los labios.
+// ==========================================
+const VISEMAS = ['aa', 'ee', 'ih', 'oh', 'ou'];
+const VOCAL_A_VISEMA = { a: 'aa', e: 'ee', i: 'ih', o: 'oh', u: 'ou', y: 'ih' };
+const MAX_VISEMA = { aa: 0.9, ee: 0.65, ih: 0.6, oh: 0.85, ou: 0.75 };
+const labios = {
+    letras: [], pesoBoca: {}, apertura: 0, buffer: null,
+    preparar(texto) {
+        // Línea de tiempo por carácter con la misma ponderación que los subtítulos (pausas en la puntuación)
+        const limpio = texto.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        const pesos = [...limpio].map(c => /[.!?:]/.test(c) ? 6 : /[,;]/.test(c) ? 3 : 1);
+        const total = pesos.reduce((a, b) => a + b, 0) || 1;
+        let acumulado = 0;
+        this.letras = [...limpio].map((c, i) => { const l = { c, inicio: acumulado / total }; acumulado += pesos[i]; return l; });
+    },
+    visemaEn(progreso) {
+        if (!this.letras.length) return { visema: 'aa', cerrar: false };
+        let i = 0, lo = 0, hi = this.letras.length - 1;
+        while (lo <= hi) { const m = (lo + hi) >> 1; if (this.letras[m].inicio <= progreso) { i = m; lo = m + 1; } else hi = m - 1; }
+        const c = this.letras[i].c;
+        const cerrar = /[mbp]/.test(c);
+        for (let d = 0; d < 3; d++) {
+            const sig = this.letras[i + d];
+            if (sig && VOCAL_A_VISEMA[sig.c]) return { visema: VOCAL_A_VISEMA[sig.c], cerrar };
+            if (sig && /[\s.,;:!?]/.test(sig.c)) break;
+        }
+        if (/[0-9]/.test(c)) return { visema: VISEMAS[Math.floor(progreso * 40) % 3 === 0 ? 0 : 1], cerrar }; // cifras leídas en voz
+        return { visema: null, cerrar };
+    },
+    actualizar(dt) {
+        // Volumen RMS del dominio del tiempo (más fiel que el promedio del espectro)
+        let nivel = 0;
+        if (analyser && isSpeaking) {
+            if (!this.buffer || this.buffer.length !== analyser.fftSize) this.buffer = new Float32Array(analyser.fftSize);
+            analyser.getFloatTimeDomainData(this.buffer);
+            let suma = 0;
+            for (let i = 0; i < this.buffer.length; i++) suma += this.buffer[i] * this.buffer[i];
+            const rms = Math.sqrt(suma / this.buffer.length);
+            nivel = Math.min(Math.max((rms - 0.012) / 0.11, 0), 1);
+        }
+        // Abre rápido y cierra más despacio, como los labios reales
+        const k = nivel > this.apertura ? 0.55 : 0.22;
+        this.apertura += (nivel - this.apertura) * k;
+
+        let objetivo = { visema: null, cerrar: false };
+        if (currentAudio && isSpeaking && currentAudio.duration && isFinite(currentAudio.duration)) {
+            objetivo = this.visemaEn(currentAudio.currentTime / currentAudio.duration);
+        }
+        const abrir = objetivo.cerrar ? this.apertura * 0.25 : this.apertura;
+        for (const v of VISEMAS) {
+            const meta = objetivo.visema === v ? abrir * MAX_VISEMA[v] : (objetivo.visema ? 0 : (v === 'aa' ? abrir * 0.6 : 0));
+            const actual = this.pesoBoca[v] || 0;
+            this.pesoBoca[v] = actual + (meta - actual) * Math.min(1, dt * 18); // coarticulación suave
+            if (currentVrm) currentVrm.expressionManager.setValue(v, this.pesoBoca[v]);
+        }
+        return this.apertura;
+    },
+};
+
 // Expuesto para depuración desde la consola del navegador
-window.ariaAvatar = { gesto: lanzarGesto, estado: setEstadoAvatar };
+window.ariaAvatar = { gesto: lanzarGesto, estado: setEstadoAvatar, vrm: () => currentVrm, definir: (nombre, def) => { GESTOS[nombre] = def; } };
 
 function animate() {
     requestAnimationFrame(animate);
-    const deltaTime = Math.min(clock.getDelta(), 0.1);
-    const time = clock.elapsedTime; // Tiempo global
+    const deltaTime = Math.min(clock.getDelta(), 0.25);
+    const time = clock.elapsedTime;
 
     if (currentVrm) {
         const hueso = (nombre) => currentVrm.humanoid.getNormalizedBoneNode(nombre);
-        const t = time - avatar.desde; // tiempo en el estado actual
 
-        // 0. Energía de la voz (alimenta la boca, los asentimientos y los gestos)
-        let volumen = 0;
-        if (analyser && dataArray && isSpeaking) {
-            analyser.getByteFrequencyData(dataArray);
-            let suma = 0;
-            for (let i = 0; i < dataArray.length; i++) suma += dataArray[i];
-            volumen = suma / dataArray.length;
-        }
-        volumenVoz += (Math.min(volumen / 40, 1) - volumenVoz) * 0.2;
+        // 0. Boca y energía de la voz
+        const voz = labios.actualizar(deltaTime);
 
-        // 1. Parpadeo natural, a veces doble
+        // 1. Parpadeo natural, a veces doble; más frecuente al terminar una frase
         if (time > nextBlinkTime) {
             currentVrm.expressionManager.setValue('blink', 1.0);
-            setTimeout(() => { if (currentVrm) currentVrm.expressionManager.setValue('blink', 0.0); }, 130);
+            setTimeout(() => { if (currentVrm) currentVrm.expressionManager.setValue('blink', 0.0); }, 120);
             if (Math.random() < 0.2) {
-                setTimeout(() => { if (currentVrm) currentVrm.expressionManager.setValue('blink', 1.0); }, 260);
-                setTimeout(() => { if (currentVrm) currentVrm.expressionManager.setValue('blink', 0.0); }, 380);
+                setTimeout(() => { if (currentVrm) currentVrm.expressionManager.setValue('blink', 1.0); }, 240);
+                setTimeout(() => { if (currentVrm) currentVrm.expressionManager.setValue('blink', 0.0); }, 360);
             }
-            nextBlinkTime = time + 2 + Math.random() * 4;
+            nextBlinkTime = time + 2.2 + Math.random() * 3.8;
         }
 
-        // 2. Mirada viva: pequeños cambios de foco; al pensar mira hacia arriba y a un lado
+        // 2. Mirada: fijaciones breves con pequeños saltos (sacadas); al pensar, mirada perdida hacia arriba
         if (time > avatar.proximaMirada) {
             if (avatar.estado === 'pensando') {
-                avatar.objetivoMirada = { x: -0.12, y: 0.18 * (Math.random() < 0.5 ? -1 : 1) };
-                avatar.proximaMirada = time + 1.5 + Math.random();
-            } else if (avatar.estado === 'escuchando' || Math.random() < 0.55) {
-                avatar.objetivoMirada = { x: 0, y: 0 }; // mirar al usuario
-                avatar.proximaMirada = time + 1.5 + Math.random() * 2.5;
+                avatar.objetivoMirada = { x: -0.14 - Math.random() * 0.05, y: 0.12 + Math.random() * 0.1 };
+                avatar.proximaMirada = time + 1.2 + Math.random() * 1.2;
+            } else if (avatar.estado === 'escuchando' || Math.random() < 0.6) {
+                avatar.objetivoMirada = { x: (Math.random() - 0.5) * 0.02, y: (Math.random() - 0.5) * 0.04 }; // al usuario
+                avatar.proximaMirada = time + 1.2 + Math.random() * 2.5;
             } else {
-                avatar.objetivoMirada = { x: (Math.random() - 0.5) * 0.08, y: (Math.random() - 0.5) * 0.22 };
-                avatar.proximaMirada = time + 0.8 + Math.random() * 1.5;
+                avatar.objetivoMirada = { x: (Math.random() - 0.5) * 0.08, y: (Math.random() - 0.5) * 0.24 };
+                avatar.proximaMirada = time + 0.6 + Math.random() * 1.2;
             }
         }
-        avatar.mirada.x += (avatar.objetivoMirada.x - avatar.mirada.x) * 0.12;
-        avatar.mirada.y += (avatar.objetivoMirada.y - avatar.mirada.y) * 0.12;
+        avatar.mirada.x += (avatar.objetivoMirada.x - avatar.mirada.x) * Math.min(1, deltaTime * 14);
+        avatar.mirada.y += (avatar.objetivoMirada.y - avatar.mirada.y) * Math.min(1, deltaTime * 14);
         const leftEye = hueso('leftEye');
         const rightEye = hueso('rightEye');
         if (leftEye && rightEye) {
@@ -224,86 +318,122 @@ function animate() {
             rightEye.rotation.set(avatar.mirada.x, avatar.mirada.y, 0);
         }
 
-        // 3. Cuerpo: respiración, cambio de peso y postura según el estado
+        // 3. Cuerpo: respiración, cambio de peso con ruido y postura según el estado
         const spine = hueso('spine');
         const chest = hueso('chest');
         const neck = hueso('neck');
         const head = hueso('head');
         const hips = hueso('hips');
-        const inclinacion = avatar.estado === 'escuchando' ? 0.035 : 0; // se inclina hacia el usuario
+        const respiracion = Math.sin(time * 1.35);
+        const inclinacion = avatar.estado === 'escuchando' ? 0.04 : avatar.estado === 'hablando' ? 0.012 : 0;
         if (hips) {
-            hips.rotation.y = Math.sin(time * 0.8) * 0.03;
-            hips.rotation.z = Math.sin(time * 0.25) * 0.025 + Math.cos(time * 0.6) * 0.01; // cambio de peso lento
+            hips.rotation.y = resorte('hips.y', ruido(time * 0.6, 1) * 0.035, 8, deltaTime);
+            hips.rotation.z = resorte('hips.z', ruido(time * 0.35, 2) * 0.025, 8, deltaTime);
         }
         if (spine) {
-            spine.rotation.x = Math.sin(time * 1.5) * 0.015 + inclinacion;
-            spine.rotation.y = Math.sin(time * 0.7) * 0.02;
-            spine.rotation.z = -Math.sin(time * 0.25) * 0.02; // compensa el cambio de peso
+            spine.rotation.x = resorte('spine.x', respiracion * 0.012 + inclinacion, 10, deltaTime);
+            spine.rotation.y = resorte('spine.y', ruido(time * 0.5, 3) * 0.025, 10, deltaTime);
+            spine.rotation.z = resorte('spine.z', -ruido(time * 0.35, 2) * 0.02, 10, deltaTime);
         }
-        if (chest) chest.rotation.x = Math.sin(time * 1.5 + 0.4) * 0.012;
+        if (chest) chest.rotation.x = Math.sin(time * 1.35 + 0.5) * 0.01;
 
         if (head) {
-            let objX = avatar.mirada.x * 0.35;
-            let objY = avatar.mirada.y * 0.45 + Math.sin(time * 0.7) * 0.015;
-            let objZ = Math.cos(time * 0.5) * 0.015;
-            if (avatar.estado === 'escuchando') { objZ += 0.09; objX += 0.04; } // inclina la cabeza al escuchar
-            if (avatar.estado === 'pensando') { objZ -= 0.06; }
+            let objX = avatar.mirada.x * 0.4 + ruido(time * 0.7, 4) * 0.015;
+            let objY = avatar.mirada.y * 0.5 + ruido(time * 0.5, 5) * 0.025;
+            let objZ = ruido(time * 0.4, 6) * 0.025;
+            if (avatar.estado === 'escuchando') { objZ += 0.08; objX += 0.035; }
+            if (avatar.estado === 'pensando') { objZ -= 0.07; objX -= 0.05; objY += 0.06; }
             if (avatar.estado === 'hablando') {
-                objX += Math.sin(time * 6.5) * 0.035 * volumenVoz + volumenVoz * 0.02; // asiente al ritmo de la voz
-                objZ += Math.sin(time * 1.3) * 0.03;
+                objX += voz * 0.05 + Math.sin(time * 4.2) * 0.02 * voz; // acentos de la voz
+                objZ += ruido(time * 0.9, 7) * 0.04;
+                objY += ruido(time * 0.6, 8) * 0.04;
             }
-            head.rotation.x += (objX - head.rotation.x) * 0.12;
-            head.rotation.y += (objY - head.rotation.y) * 0.12;
-            head.rotation.z += (objZ - head.rotation.z) * 0.08;
+            head.rotation.x = resorte('head.x', objX, 30, deltaTime);
+            head.rotation.y = resorte('head.y', objY, 24, deltaTime);
+            head.rotation.z = resorte('head.z', objZ, 18, deltaTime);
+            if (neck) neck.rotation.y = head.rotation.y * 0.35;
         }
-        if (neck && head) neck.rotation.y = head.rotation.y * 0.4;
 
-        // 4. Boca (lip-sync suavizado)
-        const objetivoBoca = volumen > 2 ? Math.min((volumen / 40) * 1.2, 0.9) : 0;
-        currentMouthOpen += (objetivoBoca - currentMouthOpen) * 0.35;
-        currentVrm.expressionManager.setValue('aa', currentMouthOpen * 0.85);
-        currentVrm.expressionManager.setValue('ou', currentMouthOpen * 0.15);
+        // 4. Gestos al hablar, con variación de forma, duración e intensidad
+        if (avatar.estado === 'hablando' && !avatar.gesto && time > avatar.proximoGesto && voz > 0.12) {
+            const opciones = GESTOS_HABLA.filter(n => n !== avatar.ultimoGesto);
+            const nombre = opciones[Math.floor(Math.random() * opciones.length)];
+            avatar.ultimoGesto = nombre;
+            lanzarGesto(nombre);
+            avatar.proximoGesto = time + 2.5 + Math.random() * 3;
+        }
+        let peso = 0;
+        const g = avatar.gesto;
+        if (g) {
+            const tg = time - g.inicio;
+            peso = pesoGesto(g, tg) * g.intensidad;
+            if (tg >= g.duracion) avatar.gesto = null;
+        }
 
-        // 5. Brazos: pose base + respiración + gesto activo
-        if (avatar.estado === 'hablando' && !avatar.gesto && time > avatar.proximoGesto && volumenVoz > 0.15) {
-            lanzarGesto(GESTOS_HABLA[Math.floor(Math.random() * GESTOS_HABLA.length)]);
-            avatar.proximoGesto = time + 3 + Math.random() * 2.5;
-        }
-        let pesoActivo = 0;
-        if (avatar.gesto) {
-            const tg = time - avatar.gesto.inicio;
-            pesoActivo = pesoGesto(tg, avatar.gesto.def.duracion);
-            if (tg >= avatar.gesto.def.duracion) avatar.gesto = null;
-        }
+        // 5. Brazos y manos: objetivo = reposo con ruido + gesto; el resorte da la inercia
         for (const [nombre, base] of Object.entries(POSE_BASE)) {
             const nodo = hueso(nombre);
             if (!nodo) continue;
-            const rot = [...base];
-            if (nombre.endsWith('UpperArm')) {
-                const lado = nombre.startsWith('left') ? 1 : -1;
-                rot[0] += Math.sin(time * 1.5) * 0.02;
-                rot[2] += lado * Math.sin(time * 1.2) * 0.03;
-            } else if (nombre.endsWith('LowerArm')) {
-                rot[0] += Math.sin(time * 0.9) * 0.04;
+            const lado = nombre.startsWith('left') ? 1 : -1;
+            const tipo = nombre.replace(/^(left|right)/, '');
+            const semilla = (lado > 0 ? 10 : 20) + tipo.length;
+            const obj = [...base];
+            if (tipo === 'UpperArm') {
+                obj[0] += respiracion * 0.015 + ruido(time * 0.5, semilla) * 0.025;
+                obj[2] += lado * ruido(time * 0.45, semilla + 1) * 0.03;
+            } else if (tipo === 'LowerArm') {
+                obj[1] += -lado * (ruido(time * 0.55, semilla) * 0.06 + 0.04);
+            } else {
+                obj[2] += ruido(time * 0.7, semilla) * 0.05;
             }
-            const g = avatar.gesto && avatar.gesto.def.pose[nombre];
-            if (g && pesoActivo > 0) {
-                for (let i = 0; i < 3; i++) rot[i] += (g[i] - rot[i]) * pesoActivo;
-                const osc = avatar.gesto.def.oscilar;
+            const pose = g && g.def.pose[nombre];
+            if (pose && peso > 0) {
+                for (let i = 0; i < 3; i++) obj[i] += (pose[i] - obj[i]) * peso;
+                const osc = g.def.oscilar;
                 if (osc && osc.hueso === nombre) {
-                    rot[osc.eje] += Math.sin((time - avatar.gesto.inicio) * osc.frecuencia * Math.PI * 2) * osc.amplitud * pesoActivo;
+                    obj[osc.eje] += Math.sin((time - g.inicio) * osc.frecuencia * Math.PI * 2) * osc.amplitud * peso;
                 }
             }
-            nodo.rotation.set(rot[0], rot[1], rot[2]);
+            // Movimientos de acento mientras habla: el antebrazo del gesto sube con las sílabas fuertes
+            if (pose && tipo === 'LowerArm' && avatar.estado === 'hablando') obj[1] += -lado * voz * 0.12 * peso;
+            const k = RIGIDEZ[tipo];
+            nodo.rotation.set(
+                resorte(nombre + '.x', obj[0], k, deltaTime),
+                resorte(nombre + '.y', obj[1], k, deltaTime),
+                resorte(nombre + '.z', obj[2], k, deltaTime));
+        }
+
+        // 6. Dedos: relajados en reposo, se abren en los gestos, con micromovimiento independiente
+        for (const lado of ['left', 'right']) {
+            const signo = lado === 'left' ? -1 : 1;
+            const apertura = g && g.def.manos && g.def.manos[lado] ? g.def.manos[lado] * peso : 0;
+            ['Index', 'Middle', 'Ring', 'Little'].forEach((dedo, i) => {
+                const relajado = 0.32 + i * 0.07 + ruido(time * 0.8, i * 3 + (lado === 'left' ? 0 : 50)) * 0.06;
+                const abierto = 0.06 + i * 0.03;
+                const curva = relajado + (abierto - relajado) * apertura;
+                const separacion = (i - 1.5) * 0.06 * apertura;
+                ['Proximal', 'Intermediate', 'Distal'].forEach((falange, j) => {
+                    const nodo = hueso(`${lado}${dedo}${falange}`);
+                    if (!nodo) return;
+                    const flexion = resorte(`${lado}${dedo}${falange}`, curva * (1 - j * 0.12), 22, deltaTime);
+                    nodo.rotation.set(0, j === 0 ? signo * separacion : 0, signo * flexion);
+                });
+            });
+            ['Proximal', 'Intermediate', 'Distal'].forEach((falange) => {
+                const nodo = hueso(`${lado}Thumb${falange}`);
+                if (!nodo) return;
+                const y = resorte(`${lado}Thumb${falange}`, signo * (0.3 - apertura * 0.15), 22, deltaTime);
+                nodo.rotation.set(0, y, signo * 0.2);
+            });
         }
 
         currentVrm.update(deltaTime);
     }
 
-    // Enfocar cámara al nivel del pecho/abdomen superior
     camera.lookAt(0, 1.2, 0);
     renderer.render(scene, camera);
 }
+
 animate();
 
 window.addEventListener('resize', () => {
@@ -612,7 +742,9 @@ async function speakTextAndShow(text, yaMostrado = false) {
 
         const source = audioContext.createMediaElementSource(audio);
         analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
+        analyser.fftSize = 1024;
+        analyser.smoothingTimeConstant = 0.4;
+        labios.preparar(cleanText);
         dataArray = new Uint8Array(analyser.frequencyBinCount);
 
         source.connect(analyser);
