@@ -209,6 +209,7 @@ def startup_event():
             chroma_client = chromadb.PersistentClient(path="./chroma_db")
             chroma_collection = chroma_client.get_collection(name=COLLECTION_NAME)
             recuperador = Recuperador(embedder, chroma_collection, cargar_reranker())
+            recuperador.buscar("calentamiento")  # la primera inferencia en GPU tarda ~0,5 s más
             print(f"RAG Inicializado. Fragmentos cargados: {chroma_collection.count()}")
         except Exception as rag_e:
             print(f"No se pudo iniciar RAG. Asegurate de ejecutar build_rag_index.py primero. Error: {rag_e}")
