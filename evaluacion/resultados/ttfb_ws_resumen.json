@@ -1,0 +1,45 @@
+{
+  "fecha": "2026-10-07 14:50",
+  "endpoint": "ws://127.0.0.1:8000/ws/chat",
+  "n_preguntas": 50,
+  "ttfb_ws_ms": {
+    "n": 50,
+    "media": 385.2,
+    "desv_est": 38.7,
+    "mediana": 383.1,
+    "min": 294.2,
+    "max": 473.5,
+    "p95": 440.8,
+    "ic95_media": 10.7
+  },
+  "ttfb_servidor_ms": {
+    "n": 50,
+    "media": 384.6,
+    "desv_est": 38.7,
+    "mediana": 382.4,
+    "min": 293.6,
+    "max": 472.8,
+    "p95": 440.2,
+    "ic95_media": 10.7
+  },
+  "rag_ms": {
+    "n": 50,
+    "media": 34.5,
+    "desv_est": 4.1,
+    "mediana": 33.8,
+    "min": 28.7,
+    "max": 46.0,
+    "p95": 44.5,
+    "ic95_media": 1.1
+  },
+  "respuesta_completa_ms": {
+    "n": 50,
+    "media": 711.7,
+    "desv_est": 155.4,
+    "mediana": 710.0,
+    "min": 479.3,
+    "max": 1042.1,
+    "p95": 1031.8,
+    "ic95_media": 43.1
+  }
+}

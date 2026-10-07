@@ -1,0 +1,101 @@
+banco,id,categoria,pregunta,rango_primer_relevante,hit@1,hit@3,hit@5,rr@5,latencia_recuperacion_ms
+desarrollo,Q01,Malla curricular,¿Cuántos semestres dura la carrera de TI?,1,1,1,1,1.0,33.2
+desarrollo,Q02,Malla curricular,¿Cuántos créditos tiene la carrera?,1,1,1,1,1.0,29.7
+desarrollo,Q03,Malla curricular,¿Cuántas materias tengo que aprobar en total?,1,1,1,1,1.0,31.9
+desarrollo,Q04,Malla curricular,¿Qué materias se ven en primer semestre?,1,1,1,1,1.0,27.7
+desarrollo,Q05,Malla curricular,¿Qué materias tiene el 2do semestre?,5,0,0,1,0.2,28.6
+desarrollo,Q06,Malla curricular,¿En qué semestre se ve Programación Orientada a Objetos?,1,1,1,1,1.0,29.2
+desarrollo,Q07,Malla curricular,¿Qué materias hay en cuarto nivel?,3,0,1,1,0.3333,27.6
+desarrollo,Q08,Malla curricular,¿En qué semestre veo aplicaciones móviles?,1,1,1,1,1.0,27.9
+desarrollo,Q09,Malla curricular,¿Cuándo se ve computación en la nube?,1,1,1,1,1.0,27.7
+desarrollo,Q10,Malla curricular,¿Qué materias tiene el 8vo semestre?,3,0,1,1,0.3333,27.2
+desarrollo,Q11,Malla curricular,¿Cómo es la secuencia de las materias de programación?,1,1,1,1,1.0,27.6
+desarrollo,Q12,Prácticas,¿En qué semestre se hacen las prácticas comunitarias?,1,1,1,1,1.0,26.8
+desarrollo,Q13,Prácticas,¿Cuándo hago las prácticas preprofesionales?,1,1,1,1,1.0,28.3
+desarrollo,Q14,Perfil de egreso,¿En qué puedo trabajar cuando me gradúe?,,0,0,0,0.0,25.4
+desarrollo,Q15,Perfil de egreso,¿Cuáles son las competencias del perfil de egreso?,1,1,1,1,1.0,31.1
+desarrollo,Q16,Titulación,¿Qué requisitos necesito para graduarme además de aprobar las materias?,3,0,1,1,0.3333,29.4
+desarrollo,Q17,Inglés,¿Qué nivel de inglés necesito para graduarme?,2,0,1,1,0.5,27.8
+desarrollo,Q18,Inglés,¿Cómo se calcula la nota del examen de suficiencia de inglés?,3,0,1,1,0.3333,30.9
+desarrollo,Q19,Inglés,¿Cuál es la nota mínima para obtener el certificado B1?,2,0,1,1,0.5,31.5
+desarrollo,Q20,Inglés,¿En cuánto tiempo me entregan el certificado de inglés?,1,1,1,1,1.0,31.2
+desarrollo,Q21,Aranceles,¿Cuánto es el pago inicial de la matrícula en Quito presencial?,2,0,1,1,0.5,29.0
+desarrollo,Q22,Aranceles,¿Cuánto cuesta la matrícula en modalidad en línea?,1,1,1,1,1.0,28.3
+desarrollo,Q23,Aranceles,¿Cuáles son las fechas de los pagos diferidos?,1,1,1,1,1.0,30.6
+desarrollo,Q24,Aranceles,¿Hay descuento si pago todo de contado?,3,0,1,1,0.3333,30.1
+desarrollo,Q25,Aranceles,¿El descuento por pronto pago se acumula con la beca?,1,1,1,1,1.0,29.3
+desarrollo,Q26,Aranceles,¿Qué pasa si pagué de más?,1,1,1,1,1.0,28.0
+desarrollo,Q27,Pagos,¿En qué bancos puedo pagar la colegiatura?,2,0,1,1,0.5,26.1
+desarrollo,Q28,Pagos,¿Cuál es el código para pagar en Mi Vecino?,1,1,1,1,1.0,28.6
+desarrollo,Q29,Pagos,¿Puedo pagar con tarjeta de crédito?,3,0,1,1,0.3333,28.3
+desarrollo,Q30,Pagos,¿Cómo subo el comprobante de pago al SGA?,2,0,1,1,0.5,27.9
+desarrollo,Q31,Pagos,¿Cómo solicito el diferimiento del pago?,2,0,1,1,0.5,28.0
+desarrollo,Q32,Becas,¿Qué becas ofrece la universidad?,2,0,1,1,0.5,27.8
+desarrollo,Q33,Becas,¿Hay becas para deportistas?,1,1,1,1,1.0,27.4
+desarrollo,Q34,Becas,¿Cómo postulo a una beca?,1,1,1,1,1.0,28.4
+desarrollo,Q35,Becas,¿Existen ayudas para estudiantes en situación vulnerable?,1,1,1,1,1.0,27.4
+desarrollo,Q36,Homologación,"Vengo de otra universidad, ¿puedo homologar mis materias?",5,0,0,1,0.2,28.2
+desarrollo,Q37,Homologación,¿Qué porcentaje de similitud necesita una materia para homologarse?,1,1,1,1,1.0,27.7
+desarrollo,Q38,Homologación,¿Qué documentos necesito para homologar?,,0,0,0,0.0,27.3
+desarrollo,Q39,Homologación,¿Puedo validar mis conocimientos con un examen?,1,1,1,1,1.0,30.5
+desarrollo,Q40,Homologación,¿Puedo homologar materias por experiencia laboral?,2,0,1,1,0.5,26.9
+desarrollo,Q41,Homologación,¿Cómo me exonero del inglés si ya tengo certificado?,1,1,1,1,1.0,31.3
+desarrollo,Q42,Contacto,¿Cuál es el número de WhatsApp de la universidad?,1,1,1,1,1.0,30.1
+desarrollo,Q43,Contacto,¿Dónde queda la sede de Quito?,1,1,1,1,1.0,27.8
+desarrollo,Q44,Contacto,¿Cuál es el horario de atención de la sede?,1,1,1,1,1.0,28.2
+desarrollo,Q45,Contacto,¿Cuál es el correo para homologaciones?,1,1,1,1,1.0,29.1
+desarrollo,Q46,Admisiones,¿Qué documentos necesito para inscribirme como estudiante nuevo?,1,1,1,1,1.0,27.8
+desarrollo,Q47,Carrera,¿A qué facultad pertenece la carrera de TI?,1,1,1,1,1.0,28.1
+desarrollo,Q48,Malla curricular,¿Qué materias de ciberseguridad hay en la carrera?,2,0,1,1,0.5,28.9
+desarrollo,Q49,Malla curricular,¿En qué semestre se ve ciencia de datos?,2,0,1,1,0.5,27.2
+desarrollo,Q50,Malla curricular,¿Cuántas horas de trabajo tiene la carrera en total?,1,1,1,1,1.0,28.5
+prueba,T01,Carrera,¿Con qué resolución fue aprobada la carrera de TI?,1,1,1,1,1.0,31.0
+prueba,T02,Contacto,¿A qué hora atiende la sede de Quito?,1,1,1,1,1.0,29.9
+prueba,T03,Contacto,¿Cómo se llama el campus de Quito?,1,1,1,1,1.0,28.1
+prueba,T04,Malla curricular,¿Cuántas horas de clase al día hay en la modalidad presencial?,1,1,1,1,1.0,28.6
+prueba,T05,Malla curricular,¿Para qué sirve Matemáticas Discretas en la carrera?,1,1,1,1,1.0,28.5
+prueba,T06,Malla curricular,¿En qué nivel se ve Interacción Hombre Máquina?,1,1,1,1,1.0,28.1
+prueba,T07,Malla curricular,¿Qué materia de primero trata el impacto ético de la tecnología?,1,1,1,1,1.0,27.2
+prueba,T08,Malla curricular,¿De qué se trata la materia Gobierno de TI?,1,1,1,1,1.0,29.0
+prueba,T09,Malla curricular,¿Qué materias tiene el quinto semestre?,3,0,1,1,0.3333,26.7
+prueba,T10,Malla curricular,¿En qué semestre veo Auditoría de TI?,1,1,1,1,1.0,28.9
+prueba,T11,Prácticas,¿Las prácticas de servicio comunitario son opcionales?,1,1,1,1,1.0,26.4
+prueba,T12,Perfil de egreso,¿Qué cargos puede tener un ingeniero en TI de la Indoamérica?,3,0,1,1,0.3333,31.5
+prueba,T13,Perfil de egreso,¿El egresado sabe diseñar redes?,1,1,1,1,1.0,26.4
+prueba,T14,Perfil de egreso,¿Los estudiantes participan en concursos de programación?,1,1,1,1,1.0,30.0
+prueba,T15,Inglés,¿Quién se encarga de la certificación de inglés?,4,0,0,1,0.25,32.4
+prueba,T16,Inglés,¿Qué habilidades evalúa el examen de suficiencia de inglés?,1,1,1,1,1.0,28.0
+prueba,T17,Inglés,¿Cuánto pesa el examen final en la nota del B1?,1,1,1,1,1.0,31.4
+prueba,T18,Inglés,¿Qué artículo regula la entrega del certificado de inglés?,3,0,1,1,0.3333,28.3
+prueba,T19,Aranceles,¿Cuánto es la matrícula presencial en la sede Ambato?,1,1,1,1,1.0,28.3
+prueba,T20,Aranceles,¿Cuál es el pago inicial en la modalidad semipresencial?,1,1,1,1,1.0,28.7
+prueba,T21,Aranceles,¿En cuántas cuotas se divide el resto del semestre?,1,1,1,1,1.0,26.2
+prueba,T22,Aranceles,¿Hasta cuándo puedo hacer el tercer pago diferido?,1,1,1,1,1.0,29.1
+prueba,T23,Aranceles,¿Hasta qué fecha tengo para pagar de contado con descuento?,2,0,1,1,0.5,31.4
+prueba,T24,Aranceles,¿Cuándo se refleja el descuento del 5% en mi estado de cuenta?,2,0,1,1,0.5,28.5
+prueba,T25,Aranceles,¿Por qué medios de pago aplica el descuento por pronto pago?,1,1,1,1,1.0,27.7
+prueba,T26,Pagos,¿Necesito un número de cuenta para pagar en la ventanilla del banco?,1,1,1,1,1.0,29.2
+prueba,T27,Pagos,¿Cómo pago la universidad desde la banca web del Pichincha?,1,1,1,1,1.0,28.2
+prueba,T28,Pagos,¿Cómo pago desde la banca virtual del Banco Guayaquil?,1,1,1,1,1.0,29.4
+prueba,T29,Pagos,¿Puedo pagar en Farmacias Económicas o Western Union?,1,1,1,1,1.0,28.5
+prueba,T30,Pagos,¿Cuál es la dirección web del SGA?,1,1,1,1,1.0,27.9
+prueba,T31,Pagos,¿Qué datos tengo que llenar al registrar un comprobante?,5,0,0,1,0.2,28.6
+prueba,T32,Pagos,¿Quién revisa el comprobante de pago que subo?,1,1,1,1,1.0,28.3
+prueba,T33,Pagos,¿Cuántos días tengo para pagar después de pedir la prórroga?,1,1,1,1,1.0,27.7
+prueba,T34,Pagos,¿Qué pasa si no se valida mi pago dentro del plazo de la prórroga?,1,1,1,1,1.0,29.0
+prueba,T35,Becas,¿Hay becas para estudiantes que hacen teatro o música?,1,1,1,1,1.0,27.8
+prueba,T36,Becas,¿Qué porcentaje cubren las becas?,1,1,1,1,1.0,27.5
+prueba,T37,Becas,¿Dónde reviso los requisitos de las becas?,1,1,1,1,1.0,28.0
+prueba,T38,Becas,¿Hay ayudas para familiares del personal administrativo?,1,1,1,1,1.0,28.0
+prueba,T39,Homologación,¿Cuántos años de antigüedad pueden tener las materias que quiero homologar?,1,1,1,1,1.0,28.8
+prueba,T40,Homologación,¿Puedo homologar una materia que ya había convalidado en otra universidad?,1,1,1,1,1.0,28.3
+prueba,T41,Homologación,¿Quiénes forman la comisión de homologación?,1,1,1,1,1.0,30.6
+prueba,T42,Homologación,"Estudié en el extranjero, ¿qué requisitos adicionales tienen mis documentos?",1,1,1,1,1.0,30.8
+prueba,T43,Homologación,¿Qué es el simulador de homologaciones?,1,1,1,1,1.0,30.7
+prueba,T44,Homologación,¿Cuánto vale la experiencia profesional en la evaluación de homologación?,5,0,0,1,0.2,28.9
+prueba,T45,Inglés,¿Puedo rendir un examen de ubicación de inglés al entrar?,1,1,1,1,1.0,30.0
+prueba,T46,Contacto,¿Cuál es el teléfono para homologaciones en Quito?,1,1,1,1,1.0,30.0
+prueba,T47,Contacto,¿Cuál es el correo de admisiones?,1,1,1,1,1.0,27.2
+prueba,T48,Contacto,¿Cuál es el número de la central telefónica de Quito?,1,1,1,1,1.0,29.6
+prueba,T49,Contacto,¿La universidad tiene oficinas en Guayaquil?,1,1,1,1,1.0,31.0
+prueba,T50,Admisiones,¿En qué meses hay más demanda de admisiones?,1,1,1,1,1.0,31.4

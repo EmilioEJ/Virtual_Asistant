@@ -6,6 +6,108 @@ import chromadb
 import shutil
 import time
 import asyncio
+import re
+
+import numpy as np
+from rank_bm25 import BM25Okapi
+
+# ============================================================
+# Parámetros compartidos del motor RAG (api.py, build_rag_index.py y evaluación)
+# ============================================================
+COLLECTION_NAME = "carrera_ti_indoamerica_collection"
+EMBEDDING_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
+# Distancia coseno explícita: ChromaDB usa L2 por defecto si no se indica.
+COLLECTION_METADATA = {"hnsw:space": "cosine"}
+# Fragmentos de 800/160 caracteres: mantienen la recuperación y reducen el prompt del LLM
+CHUNK_SIZE = 800
+CHUNK_OVERLAP = 160
+RAG_TOP_K = 3  # Fragmentos inyectados en el prompt del LLM
+# Recuperación híbrida: candidatos de cada buscador y cross-encoder multilingüe de reordenamiento
+CANDIDATOS_RRF = 20
+RERANKER_MODEL = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+
+# Normalización semántica para ayudar al modelo MiniLM
+_REEMPLAZOS = {
+    r'\b1er\b': 'primer', r'\b1ro\b': 'primer', r'\b1ero\b': 'primer',
+    r'\b2do\b': 'segundo', r'\b2da\b': 'segunda',
+    r'\b3er\b': 'tercer', r'\b3ro\b': 'tercero',
+    r'\b4to\b': 'cuarto', r'\b5to\b': 'quinto', r'\b6to\b': 'sexto',
+    r'\b7mo\b': 'séptimo', r'\b8vo\b': 'octavo',
+    r'\bsemestre\b': 'nivel', r'\bsemestres\b': 'niveles',
+    r'\bmateria\b': 'asignatura', r'\bmaterias\b': 'asignaturas',
+    r'\bbeca\b': 'beca ayuda economica', r'\bbecas\b': 'becas ayudas economicas'
+}
+
+def preparar_consulta(message: str) -> str:
+    """Normaliza la consulta y aplica Query Expansion antes de vectorizarla."""
+    search_query = message.lower()
+    for patron, reemplazo in _REEMPLAZOS.items():
+        search_query = re.sub(patron, reemplazo, search_query)
+    # Mejorador de queries (Query Expansion) para sortear las debilidades del modelo de embeddings
+    if "practica" in search_query or "práctica" in search_query:
+        search_query += " Prácticas de Servicio Comunitario Sexto Nivel Prácticas Preprofesionales Séptimo Nivel"
+    return search_query
+
+_STOPWORDS = set("""a al algo algun alguna algunas alguno algunos ante antes como con contra cual cuales cuando de del desde
+donde dos el ella ellas ellos en entre era es esa esas ese eso esos esta estas este esto estos fue fueron ha hay hasta la las
+le les lo los mas me mi mis muy ni no nos o otra otras otro otros para pero por porque que quien se sea si sin sobre son su sus
+tambien te tengo tiene tu tus un una unas uno unos y ya yo puedo hago veo cual cuanto cuanta cuantos cuantas""".split())
+
+def tokenizar_bm25(texto: str) -> list[str]:
+    """Tokenización para BM25: minúsculas, sin acentos, sin palabras vacías y con truncado a 6 letras (stemming ligero)."""
+    import unicodedata
+    texto = unicodedata.normalize("NFKD", texto.lower())
+    texto = "".join(c for c in texto if not unicodedata.combining(c))
+    tokens = re.findall(r"[a-z0-9]+", texto)
+    return [t[:6] for t in tokens if t not in _STOPWORDS]
+
+def fusion_rrf(*listas, k=60):
+    """Fusión de rangos recíprocos (Reciprocal Rank Fusion) de varias listas ordenadas."""
+    puntos = {}
+    for lista in listas:
+        for posicion, idx in enumerate(lista):
+            puntos[idx] = puntos.get(idx, 0) + 1 / (k + posicion + 1)
+    return sorted(puntos, key=puntos.get, reverse=True)
+
+def cargar_reranker():
+    """Carga el cross-encoder en GPU (FP16) si está disponible; si no, en CPU."""
+    import torch
+    from sentence_transformers import CrossEncoder
+    if torch.cuda.is_available():
+        return CrossEncoder(RERANKER_MODEL, max_length=512, device="cuda", model_kwargs={"torch_dtype": torch.float16})
+    return CrossEncoder(RERANKER_MODEL, max_length=512, device="cpu")
+
+class Recuperador:
+    """Recuperación híbrida: búsqueda densa (MiniLM + ChromaDB) y léxica (BM25),
+    fusionadas por RRF y reordenadas con un cross-encoder multilingüe."""
+
+    def __init__(self, embedder, coleccion, reranker=None):
+        self.embedder = embedder
+        self.reranker = reranker
+        self.recargar(coleccion)
+
+    def recargar(self, coleccion):
+        self.coleccion = coleccion
+        datos = coleccion.get(include=["documents"])
+        self.ids = datos["ids"]
+        self.docs = datos["documents"]
+        self.posicion = {id_: i for i, id_ in enumerate(self.ids)}
+        self.bm25 = BM25Okapi([tokenizar_bm25(d) for d in self.docs]) if self.docs else None
+
+    def buscar(self, pregunta: str, k: int = RAG_TOP_K) -> list[str]:
+        if not self.docs:
+            return []
+        consulta = preparar_consulta(pregunta)
+        n = min(CANDIDATOS_RRF, len(self.docs))
+        vector = self.embedder.encode(consulta).tolist()
+        res = self.coleccion.query(query_embeddings=[vector], n_results=n, include=[])
+        densa = [self.posicion[i] for i in res["ids"][0]]
+        lexica = list(np.argsort(-self.bm25.get_scores(tokenizar_bm25(consulta))))[:n]
+        candidatos = fusion_rrf(densa, lexica)[:n]
+        if self.reranker is not None:
+            puntajes = self.reranker.predict([(pregunta, self.docs[j]) for j in candidatos])
+            candidatos = [candidatos[i] for i in np.argsort(-puntajes)]
+        return [self.docs[j] for j in candidatos[:k]]
 
 # Variables globales para el progreso
 rag_status = {
@@ -42,14 +144,14 @@ async def process_pdfs_async(file_paths: list[str]):
         # 2. Inicializar base nueva
         add_log("Inicializando nueva base de datos vectorial ChromaDB...")
         chroma_client = chromadb.PersistentClient(path=db_path)
-        collection = chroma_client.create_collection(name="carrera_ti_indoamerica_collection")
+        collection = chroma_client.create_collection(name=COLLECTION_NAME, metadata=COLLECTION_METADATA)
         
         rag_status["progress_percent"] = 20
 
         # 3. Cargar el modelo matemático (Lento la primera vez)
         add_log("Cargando motor de Inteligencia Artificial (SentenceTransformer)...")
         # Ejecutar carga sincrónica pesada en thread
-        embedder = await asyncio.to_thread(SentenceTransformer, "paraphrase-multilingual-MiniLM-L12-v2")
+        embedder = await asyncio.to_thread(SentenceTransformer, EMBEDDING_MODEL)
         
         rag_status["progress_percent"] = 40
         
@@ -67,7 +169,7 @@ async def process_pdfs_async(file_paths: list[str]):
             
             # Dividir en chunks
             add_log(f"Dividiendo {filename} en fragmentos logicos...")
-            text_splitter = MarkdownTextSplitter(chunk_size=1500, chunk_overlap=300)
+            text_splitter = MarkdownTextSplitter(chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
             chunks = text_splitter.split_text(md_text)
             
             # Agregar metadatos a cada chunk

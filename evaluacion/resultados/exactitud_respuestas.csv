@@ -1,0 +1,61 @@
+id,pregunta,respuesta,clasificacion,justificacion
+Q01,¿Cuántos semestres dura la carrera de TI?,La carrera de Tecnologías de la Información dura 8 semestres. ¿Puedo ayudar con algo más?,Correcta,8 semestres
+Q02,¿Cuántos créditos tiene la carrera?,La carrera de Tecnologías de la Información tiene una carga horaria de 240 créditos. ¿Puedo ayudar con algo más?,Incorrecta,Indica 240 créditos; el documento indica 120
+Q03,¿Cuántas materias tengo que aprobar en total?,Tienes que aprobar un total de 40 asignaturas para graduarte en la carrera de Tecnologías de la Información. ¿Puedo ayudarte con algo más?,Correcta,40 asignaturas
+Q04,¿Qué materias se ven en primer semestre?,"En el primer semestre, se ven materias como Computación y Sociedad, Lenguaje y Comunicación, Matemáticas, Epistemología de la Tecnología de la Información, Física Aplicada y Programación Básica. Estas asignaturas introducen al paradigma universitario y sientan las bases sintácticas y cuantitativas.
+
+¿Puedo ayudar con algo más?",Correcta,Lista completa del primer nivel
+Q05,¿Qué materias tiene el 2do semestre?,"Lo siento, pero no encontré información específica sobre las materias del segundo semestre en el documento oficial proporcionado. Sin embargo, puedo decirte que el segundo nivel del eje de fundamentación de ciencias básicas y lógica computacional incluye asignaturas como Cálculo Diferencial, Matemáticas Discretas, Realidad Nacional Cultural y Ecológica, Arquitectura de Computadoras y Programación Estructurada.
+
+¿Puedo ayudarte con algo más sobre la Carrera de Tecnologías de la Información?",Parcial,Dice no encontrar la información pero luego lista las asignaturas correctas
+Q06,¿En qué semestre se ve Programación Orientada a Objetos?,"La programación orientada a objetos se ve en el tercer nivel, específicamente en el bloque de competencia que abarca la transición hacia el diseño de software moderno.",Correcta,Tercer nivel
+Q07,¿Qué materias hay en cuarto nivel?,"En el cuarto nivel, la malla curricular incluye Desarrollo de Aplicaciones Web, Fundamentos de las Bases de Datos, Ingeniería de Software, Introducción a Redes y Fundamentos de los Sistemas Operativos. Estas materias buscan la diversificación técnica y preparan a los estudiantes para la rama de conectividad y persistencia de datos.
+
+¿Puedo ayudar con algo más?",Correcta,Lista completa del cuarto nivel
+Q08,¿En qué semestre veo aplicaciones móviles?,No encontré información específica sobre el semestre en el que se ve aplicaciones móviles. ¿Te puedo ayudar con algo más sobre la Carrera de Tecnologías de la Información?,No responde,Fragmento no recuperado en el Top-3
+Q09,¿Cuándo se ve computación en la nube?,"Lo siento, pero no encontré información específica sobre cuando se ve computación en la nube en el documento oficial proporcionado. ¿Te puedo ayudar con algo más sobre la Carrera de Tecnologías de la Información?",No responde,Fragmento no recuperado en el Top-3
+Q10,¿Qué materias tiene el 8vo semestre?,"Lo siento, pero no encontré información específica sobre las materias del octavo semestre en el documento oficial proporcionado. ¿Te puedo ayudar con algo más sobre la Carrera de Tecnologías de la Información?",No responde,Fragmento no recuperado en el Top-3
+Q11,¿Cómo es la secuencia de las materias de programación?,"La secuencia de las materias de programación en la carrera de Tecnologías de la Información de la Universidad Indoamérica es la siguiente:
+
+- Programación Básica (Primer Nivel)
+- Programación Estructurada (Segundo Nivel)
+- Programación Orientada a Objetos (Tercer Nivel)
+
+Estos niveles de programación se enfocan en la introducción, la estructuración y la orientación a objetos, respectivamente.
+
+¿Puedo ayudarte con algo más sobre la carrera de Tecnologías de la Información?",Correcta,"Básica, Estructurada y POO"
+Q12,¿En qué semestre se hacen las prácticas comunitarias?,"Las prácticas comunitarias se realizan en el Sexto Nivel, específicamente en el curso ""Prácticas de Servicio Comunitario"". Este curso es obligatorio y busca vincular a los estudiantes con la colectividad a través de la aplicación de soluciones tecnológicas para mitigar la brecha digital en sectores vulnerables o instituciones sin fines de lucro.
+
+¿Puedo ayudar con algo más?",Correcta,Sexto nivel
+Q13,¿Cuándo hago las prácticas preprofesionales?,"Las prácticas pre-profesionales se realizan en el último semestre de la carrera, como parte de la ponderación de la afinidad del campo del conocimiento laborado y el ejercicio profesional demostrado.
+
+¿Puedo ayudar con algo más?",Incorrecta,Indica el último semestre; el documento indica séptimo nivel
+Q14,¿En qué puedo trabajar cuando me gradúe?,"Cuando te gradúes de la carrera de Ingeniería en Tecnologías de la Información, podrías trabajar en campos como el desarrollo de software, ciberseguridad, infraestructura de telecomunicaciones o gerencia tecnológica, siempre y cuando tengas al menos 10 años de experiencia profesional en roles y áreas que tributen a las competencias del perfil de egreso.
+
+¿Puedo ayudarte con algo más sobre la carrera?",Incorrecta,Mezcla el perfil laboral con el requisito de 10 años de experiencia de homologación
+Q15,¿Cuáles son las competencias del perfil de egreso?,"Las competencias del perfil de egreso de la carrera de Tecnologías de la Información no se mencionan explícitamente en el texto proporcionado. Sin embargo, se menciona que el perfil de egreso se evalúa mediante una matriz técnica que asigna un máximo de 30% a la afinidad del campo del conocimiento laborado y un 30% directo por el ejercicio profesional demostrado.
+
+Puedo ayudarte con algo más sobre la Carrera de Tecnologías de la Información?",Incorrecta,No lista las cuatro macro-dimensiones; mezcla la matriz de homologación
+Q16,¿Qué requisitos necesito para graduarme además de aprobar las materias?,"Para graduarte de la carrera de Tecnologías de la Información, además de aprobar las materias, debes cumplir con los siguientes requisitos: aprobación del Proyecto de Integración Curricular (o trabajo de titulación), culminación de las horas reglamentarias de prácticas preprofesionales, actividades de servicio comunitario y certificación de dominio del idioma inglés equivalente al nivel B1 según el Marco Común Europeo de Referencia para las Lenguas.
+
+¿Puedo ayudarte con algo más?",Correcta,"Prácticas, servicio comunitario, PIC e inglés B1"
+Q17,¿Qué nivel de inglés necesito para graduarme?,"Para graduarte de la carrera de Tecnologías de la Información, debes alcanzar el nivel de inglés B1 según el Marco Común Europeo de Referencia para las Lenguas (MCER).",Correcta,B1
+Q18,¿Cómo se calcula la nota del examen de suficiencia de inglés?,La nota del examen de suficiencia de inglés se calcula con un 60% del promedio acumulado de los niveles regulares y un 40% de la nota obtenida en el examen final. El promedio mínimo absoluto para aprobar es 7/10 puntos. ¿Puedo ayudar con algo más?,Correcta,"60% / 40%, mínimo 7/10"
+Q19,¿Cuál es la nota mínima para obtener el certificado B1?,No encontré la información específica sobre la nota mínima para obtener el certificado B1 en el documento oficial proporcionado. ¿Te puedo ayudar con algo más sobre la Carrera de Tecnologías de la Información?,No responde,"El fragmento se recuperó en primer lugar, pero el LLM no lo utilizó"
+Q20,¿En cuánto tiempo me entregan el certificado de inglés?,"No encontré información específica sobre el tiempo de entrega del certificado de inglés en el documento oficial proporcionado. Sin embargo, según el Artículo 41 del reglamento, la secretaría institucional debe emitir y codificar el certificado de suficiencia en un plazo máximo de 30 días posteriores al inicio del trámite financiero.
+
+¿Puedo ayudarte con algo más sobre la Carrera de Tecnologías de la Información?",Parcial,Dice no encontrar la información pero luego indica 30 días
+Q21,¿Cuánto es el pago inicial de la matrícula en Quito presencial?,El pago inicial de la matrícula en Quito presencial es de $600 USD. ¿Puedo ayudar con algo más?,Incorrecta,Indica $600; el documento indica $700 para Quito presencial
+Q22,¿Cuánto cuesta la matrícula en modalidad en línea?,No encontré información específica sobre el costo de la matrícula en modalidad en línea. ¿Tienes alguna pregunta sobre la carrera de Tecnologías de la Información?,No responde,"Fragmento recuperado en segundo lugar, no utilizado"
+Q23,¿Cuáles son las fechas de los pagos diferidos?,"Lo siento, pero no encontré información específica sobre las fechas de los pagos diferidos en el documento proporcionado. ¿Te puedo ayudar con algo más sobre la Carrera de Tecnologías de la Información?",No responde,Fragmento no recuperado en el Top-3
+Q24,¿Hay descuento si pago todo de contado?,"No hay descuento si pago todo de contado, pero sí un descuento del 5% si se paga en un solo desembolso hasta la fecha límite establecida, que es el 02 de abril de 2026. Puedes verificar más detalles en el documento oficial de la universidad. ¿Puedo ayudarte con algo más?",Parcial,"Respuesta contradictoria, aunque menciona el 5% y la fecha correcta"
+Q25,¿El descuento por pronto pago se acumula con la beca?,"El descuento por pronto pago no se acumula con la beca, ya que no es acumulable según la normativa contable. Puedo ayudar con algo más sobre la Carrera de Tecnologías de la Información?",Correcta,No acumulable
+Q26,¿Qué pasa si pagué de más?,"Si pagué de más, el saldo a favor se utilizará para finiquitar cualquier deuda vencida o actual. Si no hay deudas, puedo solicitar la devolución del excedente a través de la secretaría académica de la facultad. ¿Puedo ayudar con algo más?",Correcta,Saldo a favor: deudas o devolución
+Q27,¿En qué bancos puedo pagar la colegiatura?,"Puedes pagar la colegiatura en las ventanillas físicas de Banco Pichincha, Banco del Pacífico, Banco de Guayaquil o Produbanco, o a través de sus plataformas bancarias en línea y aplicaciones móviles. También puedes pagar en tiendas y abarrotes afiliados a redes financieras, como Mi Vecino del Banco Pichincha, o en puntos de pago externos como Farmacias Económicas y Servipagos.
+
+¿Puedo ayudarte con algo más?",Correcta,Cuatro bancos y canales
+Q28,¿Cuál es el código para pagar en Mi Vecino?,"Lo siento, pero no encontré información específica sobre el código para pagar en Mi Vecino en el documento oficial proporcionado. ¿Tienes alguna pregunta sobre la carrera de Tecnologías de la Información?",No responde,"Fragmento recuperado en quinto lugar, fuera del Top-3"
+Q29,¿Puedo pagar con tarjeta de crédito?,"Puedes pagar con tarjeta de crédito a través de la red de corresponsales no bancarios (CNB) o mediante botones de pago y redes transaccionales externas, como Farmacias Económicas o Servipagos/Pago Ágil. ¿Puedo ayudarte con algo más?",Incorrecta,Indica CNB; el documento indica Datafast o Payphone en el SGA
+Q30,¿Cómo subo el comprobante de pago al SGA?,"Para subir el comprobante de pago al SGA, ingresa a la plataforma sga.uti.edu.ec, autentica con tu nombre de usuario y contraseña, localiza el módulo ""MIS FINANZAS"", selecciona ""INGRESO DE COMPROBANTES"" y sigue las instrucciones para llenar el formulario de conciliación.
+
+¿Puedo ayudarte con algo más?",Correcta,Pasos MIS FINANZAS / INGRESO DE COMPROBANTES

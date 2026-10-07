@@ -1,0 +1,35 @@
+{
+  "fragmentos_indexados": 89,
+  "top_k_produccion": 3,
+  "desarrollo": {
+    "n_preguntas": 50,
+    "hit@1": 0.6,
+    "hit@3": 0.92,
+    "hit@5": 0.96,
+    "mrr@5": 0.748,
+    "latencia_recuperacion_ms_media": 28.6,
+    "latencia_recuperacion_ms_p95": 31.2,
+    "fallos": [
+      "Q05",
+      "Q14",
+      "Q36",
+      "Q38"
+    ]
+  },
+  "prueba": {
+    "n_preguntas": 50,
+    "hit@1": 0.84,
+    "hit@3": 0.94,
+    "hit@5": 1.0,
+    "mrr@5": 0.893,
+    "latencia_recuperacion_ms_media": 28.9,
+    "latencia_recuperacion_ms_p95": 31.4,
+    "fallos": [
+      "T15",
+      "T31",
+      "T44"
+    ]
+  },
+  "similitud_top1_dominio_media": 0.5423,
+  "similitud_top1_fuera_dominio_media": 0.3038
+}

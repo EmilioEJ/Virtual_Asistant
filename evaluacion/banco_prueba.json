@@ -1,0 +1,406 @@
+{
+  "descripcion": "Banco de PRUEBA (held-out). Redactado antes de las optimizaciones del RAG y no utilizado para ajustar parámetros; se usa solo para la medición final.",
+  "documento_fuente": "Investigación Carrera TI Indoamérica Quito.pdf",
+  "dominio": [
+    {
+      "id": "T01",
+      "categoria": "Carrera",
+      "pregunta": "¿Con qué resolución fue aprobada la carrera de TI?",
+      "gold": [
+        "RPC-SE-33-No.101-2021"
+      ]
+    },
+    {
+      "id": "T02",
+      "categoria": "Contacto",
+      "pregunta": "¿A qué hora atiende la sede de Quito?",
+      "gold": [
+        "08h00 a 17h00"
+      ]
+    },
+    {
+      "id": "T03",
+      "categoria": "Contacto",
+      "pregunta": "¿Cómo se llama el campus de Quito?",
+      "gold": [
+        "Campus Eugenio Espejo"
+      ]
+    },
+    {
+      "id": "T04",
+      "categoria": "Malla curricular",
+      "pregunta": "¿Cuántas horas de clase al día hay en la modalidad presencial?",
+      "gold": [
+        "5 horas diarias"
+      ]
+    },
+    {
+      "id": "T05",
+      "categoria": "Malla curricular",
+      "pregunta": "¿Para qué sirve Matemáticas Discretas en la carrera?",
+      "gold": [
+        "teoría de grafos"
+      ]
+    },
+    {
+      "id": "T06",
+      "categoria": "Malla curricular",
+      "pregunta": "¿En qué nivel se ve Interacción Hombre Máquina?",
+      "gold": [
+        "Abarca Cálculo Integral, Estadística"
+      ]
+    },
+    {
+      "id": "T07",
+      "categoria": "Malla curricular",
+      "pregunta": "¿Qué materia de primero trata el impacto ético de la tecnología?",
+      "gold": [
+        "ancla la tecnología a su impacto ético"
+      ]
+    },
+    {
+      "id": "T08",
+      "categoria": "Malla curricular",
+      "pregunta": "¿De qué se trata la materia Gobierno de TI?",
+      "gold": [
+        "alinea la tecnología con los objetivos del negocio"
+      ]
+    },
+    {
+      "id": "T09",
+      "categoria": "Malla curricular",
+      "pregunta": "¿Qué materias tiene el quinto semestre?",
+      "gold": [
+        "Incluye Metodología de Investigación, Administración de Base de Datos"
+      ]
+    },
+    {
+      "id": "T10",
+      "categoria": "Malla curricular",
+      "pregunta": "¿En qué semestre veo Auditoría de TI?",
+      "gold": [
+        "Abarca Auditoría de TI, Cyberseguridad"
+      ]
+    },
+    {
+      "id": "T11",
+      "categoria": "Prácticas",
+      "pregunta": "¿Las prácticas de servicio comunitario son opcionales?",
+      "gold": [
+        "estas horas no son optativas"
+      ]
+    },
+    {
+      "id": "T12",
+      "categoria": "Perfil de egreso",
+      "pregunta": "¿Qué cargos puede tener un ingeniero en TI de la Indoamérica?",
+      "gold": [
+        "Ingeniero de Datos, Consultor Estratégico en TI"
+      ]
+    },
+    {
+      "id": "T13",
+      "categoria": "Perfil de egreso",
+      "pregunta": "¿El egresado sabe diseñar redes?",
+      "gold": [
+        "Arquitectura de Redes y Telecomunicaciones"
+      ]
+    },
+    {
+      "id": "T14",
+      "categoria": "Perfil de egreso",
+      "pregunta": "¿Los estudiantes participan en concursos de programación?",
+      "gold": [
+        "Concurso de Programación"
+      ]
+    },
+    {
+      "id": "T15",
+      "categoria": "Inglés",
+      "pregunta": "¿Quién se encarga de la certificación de inglés?",
+      "gold": [
+        "Departamento de Idiomas"
+      ]
+    },
+    {
+      "id": "T16",
+      "categoria": "Inglés",
+      "pregunta": "¿Qué habilidades evalúa el examen de suficiencia de inglés?",
+      "gold": [
+        "destrezas receptivas"
+      ]
+    },
+    {
+      "id": "T17",
+      "categoria": "Inglés",
+      "pregunta": "¿Cuánto pesa el examen final en la nota del B1?",
+      "gold": [
+        "restante recae directamente"
+      ]
+    },
+    {
+      "id": "T18",
+      "categoria": "Inglés",
+      "pregunta": "¿Qué artículo regula la entrega del certificado de inglés?",
+      "gold": [
+        "Artículo 41"
+      ]
+    },
+    {
+      "id": "T19",
+      "categoria": "Aranceles",
+      "pregunta": "¿Cuánto es la matrícula presencial en la sede Ambato?",
+      "gold": [
+        "Presencial - Sede Ambato"
+      ]
+    },
+    {
+      "id": "T20",
+      "categoria": "Aranceles",
+      "pregunta": "¿Cuál es el pago inicial en la modalidad semipresencial?",
+      "gold": [
+        "Semipresencial - Sedes Ambato y Quito"
+      ]
+    },
+    {
+      "id": "T21",
+      "categoria": "Aranceles",
+      "pregunta": "¿En cuántas cuotas se divide el resto del semestre?",
+      "gold": [
+        "tres (3) pagos iguales diferidos"
+      ]
+    },
+    {
+      "id": "T22",
+      "categoria": "Aranceles",
+      "pregunta": "¿Hasta cuándo puedo hacer el tercer pago diferido?",
+      "gold": [
+        "15 de julio de 2026"
+      ]
+    },
+    {
+      "id": "T23",
+      "categoria": "Aranceles",
+      "pregunta": "¿Hasta qué fecha tengo para pagar de contado con descuento?",
+      "gold": [
+        "02 de abril de 2026"
+      ]
+    },
+    {
+      "id": "T24",
+      "categoria": "Aranceles",
+      "pregunta": "¿Cuándo se refleja el descuento del 5% en mi estado de cuenta?",
+      "gold": [
+        "luego del segundo mes de clases"
+      ]
+    },
+    {
+      "id": "T25",
+      "categoria": "Aranceles",
+      "pregunta": "¿Por qué medios de pago aplica el descuento por pronto pago?",
+      "gold": [
+        "recaudación bancaria institucional o mediante el uso de tarjeta"
+      ]
+    },
+    {
+      "id": "T26",
+      "categoria": "Pagos",
+      "pregunta": "¿Necesito un número de cuenta para pagar en la ventanilla del banco?",
+      "gold": [
+        "No se requiere un número de cuenta destino"
+      ]
+    },
+    {
+      "id": "T27",
+      "categoria": "Pagos",
+      "pregunta": "¿Cómo pago la universidad desde la banca web del Pichincha?",
+      "gold": [
+        "Pagos/Servicios - Facturas"
+      ]
+    },
+    {
+      "id": "T28",
+      "categoria": "Pagos",
+      "pregunta": "¿Cómo pago desde la banca virtual del Banco Guayaquil?",
+      "gold": [
+        "Instituciones Educativas"
+      ]
+    },
+    {
+      "id": "T29",
+      "categoria": "Pagos",
+      "pregunta": "¿Puedo pagar en Farmacias Económicas o Western Union?",
+      "gold": [
+        "Farmacias Económicas"
+      ]
+    },
+    {
+      "id": "T30",
+      "categoria": "Pagos",
+      "pregunta": "¿Cuál es la dirección web del SGA?",
+      "gold": [
+        "sga.uti.edu.ec"
+      ]
+    },
+    {
+      "id": "T31",
+      "categoria": "Pagos",
+      "pregunta": "¿Qué datos tengo que llenar al registrar un comprobante?",
+      "gold": [
+        "Llenado del Formulario de Conciliación"
+      ]
+    },
+    {
+      "id": "T32",
+      "categoria": "Pagos",
+      "pregunta": "¿Quién revisa el comprobante de pago que subo?",
+      "gold": [
+        "personal de cartera"
+      ]
+    },
+    {
+      "id": "T33",
+      "categoria": "Pagos",
+      "pregunta": "¿Cuántos días tengo para pagar después de pedir la prórroga?",
+      "gold": [
+        "tres (3) días laborables"
+      ]
+    },
+    {
+      "id": "T34",
+      "categoria": "Pagos",
+      "pregunta": "¿Qué pasa si no se valida mi pago dentro del plazo de la prórroga?",
+      "gold": [
+        "eliminará automáticamente la matrícula"
+      ]
+    },
+    {
+      "id": "T35",
+      "categoria": "Becas",
+      "pregunta": "¿Hay becas para estudiantes que hacen teatro o música?",
+      "gold": [
+        "Mérito y Rendimiento Cultural"
+      ]
+    },
+    {
+      "id": "T36",
+      "categoria": "Becas",
+      "pregunta": "¿Qué porcentaje cubren las becas?",
+      "gold": [
+        "25%, 50% o 100%"
+      ]
+    },
+    {
+      "id": "T37",
+      "categoria": "Becas",
+      "pregunta": "¿Dónde reviso los requisitos de las becas?",
+      "gold": [
+        "El Manual de Becas"
+      ]
+    },
+    {
+      "id": "T38",
+      "categoria": "Becas",
+      "pregunta": "¿Hay ayudas para familiares del personal administrativo?",
+      "gold": [
+        "familiares de personal administrativo"
+      ]
+    },
+    {
+      "id": "T39",
+      "categoria": "Homologación",
+      "pregunta": "¿Cuántos años de antigüedad pueden tener las materias que quiero homologar?",
+      "gold": [
+        "diez (10) años"
+      ]
+    },
+    {
+      "id": "T40",
+      "categoria": "Homologación",
+      "pregunta": "¿Puedo homologar una materia que ya había convalidado en otra universidad?",
+      "gold": [
+        "No recursividad"
+      ]
+    },
+    {
+      "id": "T41",
+      "categoria": "Homologación",
+      "pregunta": "¿Quiénes forman la comisión de homologación?",
+      "gold": [
+        "Comisión de Reconocimiento u Homologación"
+      ]
+    },
+    {
+      "id": "T42",
+      "categoria": "Homologación",
+      "pregunta": "Estudié en el extranjero, ¿qué requisitos adicionales tienen mis documentos?",
+      "gold": [
+        "apostilla de La Haya"
+      ]
+    },
+    {
+      "id": "T43",
+      "categoria": "Homologación",
+      "pregunta": "¿Qué es el simulador de homologaciones?",
+      "gold": [
+        "simulador de homologaciones"
+      ]
+    },
+    {
+      "id": "T44",
+      "categoria": "Homologación",
+      "pregunta": "¿Cuánto vale la experiencia profesional en la evaluación de homologación?",
+      "gold": [
+        "máximo de 30%"
+      ]
+    },
+    {
+      "id": "T45",
+      "categoria": "Inglés",
+      "pregunta": "¿Puedo rendir un examen de ubicación de inglés al entrar?",
+      "gold": [
+        "Examen de Ubicación Diagnóstica"
+      ]
+    },
+    {
+      "id": "T46",
+      "categoria": "Contacto",
+      "pregunta": "¿Cuál es el teléfono para homologaciones en Quito?",
+      "gold": [
+        "0987621218"
+      ]
+    },
+    {
+      "id": "T47",
+      "categoria": "Contacto",
+      "pregunta": "¿Cuál es el correo de admisiones?",
+      "gold": [
+        "admisionesindoamerica@uti.edu.ec"
+      ]
+    },
+    {
+      "id": "T48",
+      "categoria": "Contacto",
+      "pregunta": "¿Cuál es el número de la central telefónica de Quito?",
+      "gold": [
+        "382 6970"
+      ]
+    },
+    {
+      "id": "T49",
+      "categoria": "Contacto",
+      "pregunta": "¿La universidad tiene oficinas en Guayaquil?",
+      "gold": [
+        "Edificio INDUAUTO"
+      ]
+    },
+    {
+      "id": "T50",
+      "categoria": "Admisiones",
+      "pregunta": "¿En qué meses hay más demanda de admisiones?",
+      "gold": [
+        "marzo y abril"
+      ]
+    }
+  ]
+}

@@ -247,22 +247,19 @@ const sendBtn = document.getElementById('sendBtn');
 let isSpeaking = false;
 let currentAudio = null; // Guardar referencia al audio actvo para interrumpirlo
 
+function formatearTexto(text) {
+    if (typeof marked !== 'undefined') return marked.parse(text);
+    return `<p>${text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>`;
+}
+
 function addMessage(text, isUser = false) {
     const msgDiv = document.createElement('div');
     msgDiv.classList.add('message');
     msgDiv.classList.add(isUser ? 'user-msg' : 'system-msg');
-    
-    let formattedText;
-    if (typeof marked !== 'undefined') {
-        formattedText = marked.parse(text);
-    } else {
-        formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        formattedText = `<p>${formattedText}</p>`;
-    }
-    
-    msgDiv.innerHTML = formattedText;
+    msgDiv.innerHTML = formatearTexto(text);
     chatBox.appendChild(msgDiv);
     chatBox.scrollTop = chatBox.scrollHeight;
+    return msgDiv;
 }
 
 function showLoading() {
@@ -281,6 +278,71 @@ function removeLoading() {
 
 let currentMode = "conversational"; // "chat" o "conversational"
 
+// ==========================================
+// Chat en streaming por WebSocket (/ws/chat)
+// ==========================================
+const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+let chatSocket = null;
+let consultaPendiente = null;
+let colaChat = Promise.resolve();
+
+function conectarChat() {
+    if (chatSocket && chatSocket.readyState === WebSocket.OPEN) return Promise.resolve(chatSocket);
+    return new Promise((resolve, reject) => {
+        const socket = new WebSocket(`${wsProtocol}//${window.location.host}/ws/chat`);
+        socket.onopen = () => { chatSocket = socket; resolve(socket); };
+        socket.onerror = () => reject(new Error('No se pudo conectar con el chat.'));
+        socket.onclose = () => {
+            chatSocket = null;
+            if (consultaPendiente) consultaPendiente.reject(new Error('Conexión cerrada.'));
+            consultaPendiente = null;
+        };
+        socket.onmessage = (event) => {
+            const datos = JSON.parse(event.data);
+            const consulta = consultaPendiente;
+            if (!consulta) return;
+            if (datos.type === 'token') {
+                consulta.onToken(datos.text);
+            } else {
+                consultaPendiente = null;
+                if (datos.type === 'fin') consulta.resolve(datos.reply);
+                else consulta.reject(new Error(datos.detail || 'Error del servidor.'));
+            }
+        };
+    });
+}
+
+// Las consultas se encadenan para que los fragmentos de una respuesta no se mezclen con la siguiente
+function consultarAria(texto, onToken) {
+    const resultado = colaChat.then(async () => {
+        const socket = await conectarChat();
+        return new Promise((resolve, reject) => {
+            consultaPendiente = { resolve, reject, onToken };
+            socket.send(JSON.stringify({ message: texto }));
+        });
+    });
+    colaChat = resultado.catch(() => {});
+    return resultado;
+}
+
+// En modo chat el texto aparece a medida que llega; la voz se sintetiza al completar la respuesta
+async function responder(texto) {
+    let burbuja = null;
+    let acumulado = '';
+    const reply = await consultarAria(texto, (fragmento) => {
+        if (currentMode !== 'chat') return;
+        acumulado += fragmento;
+        if (!burbuja) {
+            removeLoading();
+            burbuja = addMessage('', false);
+        }
+        burbuja.innerHTML = formatearTexto(acumulado);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    });
+    if (burbuja) burbuja.innerHTML = formatearTexto(reply);
+    await speakTextAndShow(reply, burbuja !== null);
+}
+
 async function sendMessage(textToSend = null) {
     const text = textToSend !== null ? textToSend : userInput.value.trim();
     if (!text) return;
@@ -296,32 +358,13 @@ async function sendMessage(textToSend = null) {
     }
 
     try {
-        const response = await fetch('/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: text, mode: currentMode })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            // En vez de mostrar el texto rápido, esperamos a sincronizar el audio
-            await speakTextAndShow(data.reply);
-        } else {
-            if (currentMode === "chat") {
-                removeLoading();
-                addMessage('Error: ' + (data.detail || 'Problema de conexión.'));
-            } else {
-                document.getElementById('convStatus').textContent = "Error de conexión";
-                document.getElementById('convWaves').classList.remove('active');
-            }
-        }
+        await responder(text);
     } catch (error) {
         if (currentMode === "chat") {
             removeLoading();
-            addMessage('Error de red al conectar con el servidor.');
+            addMessage('Error: ' + (error.message || 'Problema de conexión.'));
         } else {
-            document.getElementById('convStatus').textContent = "Error de red";
+            document.getElementById('convStatus').textContent = "Error de conexión";
             document.getElementById('convWaves').classList.remove('active');
         }
     }
@@ -331,17 +374,7 @@ async function sendMessage(textToSend = null) {
 async function sendHiddenEvent(hiddenPrompt) {
     if (currentMode === "chat") showLoading();
     try {
-        const response = await fetch('/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: hiddenPrompt, mode: currentMode })
-        });
-        const data = await response.json();
-        if (response.ok) {
-            await speakTextAndShow(data.reply);
-        } else {
-            if (currentMode === "chat") removeLoading();
-        }
+        await responder(hiddenPrompt);
     } catch (e) {
         if (currentMode === "chat") removeLoading();
     }
@@ -352,12 +385,12 @@ userInput.addEventListener('keypress', (e) => {
 });
 
 // 2.1 Text-to-Speech Sincronizado (El VRM Habla)
-async function speakTextAndShow(text) {
+async function speakTextAndShow(text, yaMostrado = false) {
     let cleanText = text.replace(/[*#_]/g, '').trim();
     if (!cleanText) {
         if (currentMode === "chat") {
             removeLoading();
-            addMessage(text, false);
+            if (!yaMostrado) addMessage(text, false);
         } else {
             document.getElementById('convStatus').textContent = "Toca el micrófono para hablar con Aria";
             document.getElementById('convWaves').classList.remove('active');
@@ -388,7 +421,7 @@ async function speakTextAndShow(text) {
         if (!response.ok) {
             if (currentMode === "chat") {
                 removeLoading();
-                addMessage(text, false);
+                if (!yaMostrado) addMessage(text, false);
             } else {
                 document.getElementById('convStatus').textContent = "Error reproduciendo voz";
                 document.getElementById('convWaves').classList.remove('active');
@@ -458,7 +491,7 @@ async function speakTextAndShow(text) {
         // ---> Sincronización <---
         if (currentMode === "chat") {
             removeLoading();
-            addMessage(text, false);
+            if (!yaMostrado) addMessage(text, false);
         }
         await audio.play();
 
@@ -466,7 +499,7 @@ async function speakTextAndShow(text) {
         console.error("Error conectando con la voz neuronal:", err);
         if (currentMode === "chat") {
             removeLoading();
-            addMessage(text, false);
+            if (!yaMostrado) addMessage(text, false);
         } else {
             document.getElementById('convStatus').textContent = "Toca el micrófono para hablar con Aria";
             document.getElementById('convWaves').classList.remove('active');
@@ -666,36 +699,59 @@ modeConvBtn.addEventListener('click', () => {
 });
 
 // ==========================================
-// 3. WebSockets (Fase Final: OpenCV)
+// 3. WebSocket de presencia (eventos person_arrived / person_left)
 // ==========================================
-const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws`);
 
 let hasWelcomed = false;
 let wasInterrupted = false;
 
 // ==========================================
-// 4. Captura de Video para Visión Artificial en Backend
+// 4. Visión artificial en el cliente (MediaPipe Face Detector)
+// La detección se ejecuta en el navegador; al servidor solo se envían las cajas delimitadoras.
 // ==========================================
+const MEDIAPIPE_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+const INTERVALO_DETECCION_MS = 1000;
+
 let videoElement = document.createElement('video');
 videoElement.autoplay = true;
+videoElement.muted = true;
+videoElement.playsInline = true;
 videoElement.style.display = 'none';
 document.body.appendChild(videoElement);
-
-let canvasElement = document.createElement('canvas');
-canvasElement.style.display = 'none';
-document.body.appendChild(canvasElement);
-let ctx = canvasElement.getContext('2d');
 
 let isCameraActive = false;
 let visionInterval = null;
 let visionStream = null;
+let detectorRostros = null;
+
+async function cargarDetectorRostros() {
+    if (detectorRostros) return detectorRostros;
+    const { FilesetResolver, FaceDetector } = await import(`${MEDIAPIPE_URL}/vision_bundle.mjs`);
+    const fileset = await FilesetResolver.forVisionTasks(`${MEDIAPIPE_URL}/wasm`);
+    detectorRostros = await FaceDetector.createFromOptions(fileset, {
+        baseOptions: { modelAssetPath: '/static/models/blaze_face_short_range.tflite', delegate: 'GPU' },
+        runningMode: 'VIDEO',
+        minDetectionConfidence: 0.5
+    });
+    return detectorRostros;
+}
+
+function detectarCajas() {
+    const { detections } = detectorRostros.detectForVideo(videoElement, performance.now());
+    return detections.map(({ boundingBox: c }) => [Math.round(c.originX), Math.round(c.originY), Math.round(c.width), Math.round(c.height)]);
+}
+
+let iniciandoCamara = false;
 
 async function startCameraForVision() {
-    if (isCameraActive) return;
+    if (isCameraActive || iniciandoCamara) return;
+    iniciandoCamara = true;
     try {
-        visionStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        visionStream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } });
         videoElement.srcObject = visionStream;
+        await cargarDetectorRostros();
+        if (!visionStream) return; // la cámara se apagó mientras cargaba el modelo
         
         const camBtn = document.getElementById('toggleCameraBtn');
         if (camBtn) {
@@ -703,28 +759,17 @@ async function startCameraForVision() {
             camBtn.classList.add('active');
         }
         
-        videoElement.onloadedmetadata = () => {
-            canvasElement.width = 320; // Resolución fija baja para no saturar la red
-            canvasElement.height = 240;
-            isCameraActive = true;
-            
-            // Enviar un frame al backend cada segundo (1000ms)
-            visionInterval = setInterval(() => {
-                if (ws.readyState === WebSocket.OPEN && isCameraActive) {
-                    ctx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
-                    // Obtener base64 JPG
-                    const base64Frame = canvasElement.toDataURL('image/jpeg', 0.5);
-                    ws.send(base64Frame);
-                }
-            }, 1000);
-        };
+        isCameraActive = true;
+        visionInterval = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN && isCameraActive && videoElement.readyState >= 2) {
+                ws.send(JSON.stringify({ cajas: detectarCajas() }));
+            }
+        }, INTERVALO_DETECCION_MS);
     } catch (err) {
-        console.error("Error al acceder a la cámara para visión:", err);
-        const camBtn = document.getElementById('toggleCameraBtn');
-        if (camBtn) {
-            camBtn.classList.remove('active');
-            camBtn.classList.add('inactive');
-        }
+        console.error("Error al iniciar la visión artificial:", err);
+        stopCameraForVision();
+    } finally {
+        iniciandoCamara = false;
     }
 }
 
@@ -749,7 +794,7 @@ function stopCameraForVision() {
 }
 
 ws.onopen = () => {
-    console.log("Conectado al Ojo (Visión Artificial de OpenCV en servidor)");
+    console.log("Conectado al canal de presencia (detección facial en el navegador)");
     if (currentMode === "conversational" && isUserCameraPreferenceOn) {
         startCameraForVision();
     }
@@ -796,7 +841,7 @@ ws.onmessage = (event) => {
 };
 
 ws.onerror = () => {
-    console.error('Error de conexión WebSocket para cámara');
+    console.error('Error de conexión WebSocket de presencia');
 };
 
 // Función para las preguntas sugeridas en la interfaz

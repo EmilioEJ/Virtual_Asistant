@@ -1,0 +1,80 @@
+{
+  "casos": [
+    {
+      "escenario": "Llegada, salida y retorno",
+      "esperados": [
+        [
+          2,
+          "person_arrived"
+        ],
+        [
+          7,
+          "person_left"
+        ],
+        [
+          10,
+          "person_arrived"
+        ]
+      ],
+      "obtenidos": [
+        [
+          2,
+          "person_arrived"
+        ],
+        [
+          7,
+          "person_left"
+        ],
+        [
+          10,
+          "person_arrived"
+        ]
+      ],
+      "aprobado": true
+    },
+    {
+      "escenario": "Rostro en un solo fotograma (ruido)",
+      "esperados": [],
+      "obtenidos": [],
+      "aprobado": true
+    },
+    {
+      "escenario": "Ausencia breve de 3 fotogramas",
+      "esperados": [
+        [
+          2,
+          "person_arrived"
+        ]
+      ],
+      "obtenidos": [
+        [
+          2,
+          "person_arrived"
+        ]
+      ],
+      "aprobado": true
+    },
+    {
+      "escenario": "WebSocket /ws sin sesión",
+      "esperados": 4401,
+      "obtenidos": 4401,
+      "aprobado": true
+    },
+    {
+      "escenario": "WebSocket /ws con sesión",
+      "esperados": [
+        "person_arrived",
+        "person_left"
+      ],
+      "obtenidos": [
+        "person_arrived",
+        "person_left"
+      ],
+      "aprobado": true
+    }
+  ],
+  "aprobados": 5,
+  "total": 5,
+  "fotogramas_llegada": 2,
+  "fotogramas_salida": 4
+}

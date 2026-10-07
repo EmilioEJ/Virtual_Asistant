@@ -1,0 +1,51 @@
+id,pregunta,ttfb_ws_ms,ttfb_servidor_ms,rag_ms,respuesta_completa_ms,respuesta
+T01,¿Con qué resolución fue aprobada la carrera de TI?,446.0,445.3,40.9,857.9,La carrera de TI fue aprobada por la Resolución No. SE-01-002-CSU-2022.
+T02,¿A qué hora atiende la sede de Quito?,412.2,411.7,36.0,771.8,"La sede de Quito atiende de 08h00 a 17h00, de lunes a viernes."
+T03,¿Cómo se llama el campus de Quito?,373.2,372.6,31.6,534.1,El campus de Quito se llama Campus Eugenio Espejo.
+T04,¿Cuántas horas de clase al día hay en la modalidad presencial?,362.1,361.5,32.1,628.9,"En la modalidad presencial, las clases sincrónicas promedian 5 horas diarias."
+T05,¿Para qué sirve Matemáticas Discretas en la carrera?,294.2,293.6,30.2,550.0,Matemáticas Discretas es vital para la teoría de grafos y bases de datos.
+T06,¿En qué nivel se ve Interacción Hombre Máquina?,329.7,329.1,31.4,529.4,Interacción Hombre Máquina se ve en el Tercer Nivel.
+T07,¿Qué materia de primero trata el impacto ético de la tecnología?,341.0,340.4,31.0,527.3,Computación y Sociedad trata el impacto ético de la tecnología.
+T08,¿De qué se trata la materia Gobierno de TI?,331.8,331.1,30.2,519.3,Gobierno de TI alinea la tecnología con los objetivos del negocio.
+T09,¿Qué materias tiene el quinto semestre?,311.2,310.6,28.7,791.3,"Metodología de Investigación, Administración de Base de Datos, Administración de Sistemas Operativos, Interconexión de Redes y Desarrollo de Aplicaciones Móviles."
+T10,¿En qué semestre veo Auditoría de TI?,378.5,377.9,31.3,577.5,Auditoría de TI se encuentra en el octavo semestre.
+T11,¿Las prácticas de servicio comunitario son opcionales?,363.0,362.5,29.1,707.8,"Las prácticas de servicio comunitario no son opcionales, sino un requisito exigido por la normativa ecuatoriana."
+T12,¿Qué cargos puede tener un ingeniero en TI de la Indoamérica?,342.4,341.8,37.6,1031.8,"Los cargos que puede tener un ingeniero en TI de la Indoamérica son Desarrollador de Software Full-Stack, Ingeniero de Datos, Consultor Estratégico en TI, Especialista en Ciberseguridad o Emprendedor Tecnológico."
+T13,¿El egresado sabe diseñar redes?,332.3,331.7,31.5,479.3,"Sí, el egresado sabe diseñar redes."
+T14,¿Los estudiantes participan en concursos de programación?,473.5,472.8,44.5,634.7,"Sí, los estudiantes participan en concursos de programación."
+T15,¿Quién se encarga de la certificación de inglés?,325.2,324.6,33.2,485.9,La comisión se encarga de la certificación de inglés.
+T16,¿Qué habilidades evalúa el examen de suficiencia de inglés?,365.9,365.3,29.7,749.8,El examen evalúa destrezas receptivas (comprensión auditiva y lectora) y productivas (expresión oral y escrita).
+T17,¿Cuánto pesa el examen final en la nota del B1?,368.1,367.6,35.2,594.5,El examen final pesa el 40% en la nota del B1.
+T18,¿Qué artículo regula la entrega del certificado de inglés?,330.0,329.4,30.3,530.4,El artículo 41 regula la entrega del certificado de inglés.
+T19,¿Cuánto es la matrícula presencial en la sede Ambato?,425.8,425.1,30.8,813.7,La matrícula presencial en la sede Ambato requiere un pago inicial de $600 USD al momento de la matrícula.
+T20,¿Cuál es el pago inicial en la modalidad semipresencial?,436.0,435.4,34.3,679.5,El pago inicial en la modalidad semipresencial es de $600 USD.
+T21,¿En cuántas cuotas se divide el resto del semestre?,370.5,370.0,30.5,573.3,El resto del semestre se divide en tres cuotas iguales.
+T22,¿Hasta cuándo puedo hacer el tercer pago diferido?,425.2,424.4,39.6,713.9,El tercer pago diferido puede hacerse hasta el 15 de julio de 2026.
+T23,¿Hasta qué fecha tengo para pagar de contado con descuento?,408.5,407.9,38.9,764.2,El pago total debe ejecutarse en un solo desembolso hasta el 02 de abril de 2026.
+T24,¿Cuándo se refleja el descuento del 5% en mi estado de cuenta?,398.0,397.5,32.5,709.8,El descuento del 5% se refleja en tu estado de cuenta después del segundo mes de clases.
+T25,¿Por qué medios de pago aplica el descuento por pronto pago?,396.3,395.8,36.8,799.9,El descuento solo aplica si la transacción se realiza a través de recaudación bancaria institucional o mediante tarjeta de crédito/débito.
+T26,¿Necesito un número de cuenta para pagar en la ventanilla del banco?,423.2,422.6,31.5,831.2,No se requiere un número de cuenta destino; solo se debe indicar al cajero el número de cédula de ciudadanía del alumno.
+T27,¿Cómo pago la universidad desde la banca web del Pichincha?,414.6,413.9,46.0,1042.1,"Ingresando en la sección ""Pagos/Servicios - Facturas"", busca la empresa ""Universidad Indoamérica"", ingresa el número de cédula como contrapartida y escribe el nombre completo en la descripción."
+T28,¿Cómo pago desde la banca virtual del Banco Guayaquil?,415.3,414.5,36.0,1033.4,"Ingresando en la sección ""Pago de Servicios"" bajo la categoría ""Instituciones Educativas"", se localiza a la universidad y se introduce el número de cédula para consultar y saldar la deuda."
+T29,¿Puedo pagar en Farmacias Económicas o Western Union?,418.1,417.4,38.1,795.3,"Sí, puedes pagar en Farmacias Económicas o Western Union, indicando el nombre de la universidad y tu cédula."
+T30,¿Cuál es la dirección web del SGA?,413.3,412.7,33.2,630.0,La dirección web del SGA es sga.uti.edu.ec.
+T31,¿Qué datos tengo que llenar al registrar un comprobante?,379.9,379.2,34.5,839.3,"Para registrar un comprobante debes ingresar la modalidad de pago, la fecha de la transacción, el número de comprobante y una observación."
+T32,¿Quién revisa el comprobante de pago que subo?,332.5,331.9,31.4,521.6,El personal de cartera revisa el comprobante de pago.
+T33,¿Cuántos días tengo para pagar después de pedir la prórroga?,376.7,376.1,30.7,592.7,Tienes tres días laborables para pagar después de pedir la prórroga.
+T34,¿Qué pasa si no se valida mi pago dentro del plazo de la prórroga?,378.9,378.3,32.3,903.1,"Si no se valida el pago dentro de los tres días laborables, la matrícula se eliminará automáticamente y el estudiante deberá reiniciar el trámite administrativo."
+T35,¿Hay becas para estudiantes que hacen teatro o música?,382.8,382.0,34.8,559.1,"Sí, hay becas para estudiantes que hacen teatro o música."
+T36,¿Qué porcentaje cubren las becas?,386.2,385.6,34.7,708.2,Las becas cubren un descuento del 5% sobre el valor total de la obligación financiera.
+T37,¿Dónde reviso los requisitos de las becas?,366.7,366.1,35.1,929.9,"Revisa el Manual de Becas, documento rector actualizado anualmente, que detalla los requisitos habilitantes y umbrales de calificaciones vigentes para el periodo 2026."
+T38,¿Hay ayudas para familiares del personal administrativo?,378.9,377.9,32.2,595.4,"Sí, hay ayudas económicas puntuales para familiares del personal administrativo."
+T39,¿Cuántos años de antigüedad pueden tener las materias que quiero homologar?,401.0,400.3,31.0,710.2,Las materias pueden tener una antigüedad máxima de diez años contados hacia atrás desde la fecha de postulación.
+T40,¿Puedo homologar una materia que ya había convalidado en otra universidad?,416.7,416.2,45.2,726.2,"No, está terminantemente prohibido homologar una materia que ya haya sido convalidada en otra universidad."
+T41,¿Quiénes forman la comisión de homologación?,393.5,392.9,38.5,797.9,La comisión de homologación está estructurada por un coordinador académico y dos docentes especialistas en el área de tecnologías de la información.
+T42,"Estudié en el extranjero, ¿qué requisitos adicionales tienen mis documentos?",383.4,382.8,36.6,1013.8,"Si los estudios provienen de universidades foráneas, todos los documentos deben estar traducidos al castellano y llevar la apostilla de La Haya o legalización consular, junto con copia legible del pasaporte y visa."
+T43,¿Qué es el simulador de homologaciones?,420.7,420.2,38.5,905.9,El simulador de homologaciones es un entorno virtual que expone al candidato a bancos de preguntas y arquitecturas de problemas lógicos similares a los de la asignatura real.
+T44,¿Cuánto vale la experiencia profesional en la evaluación de homologación?,422.0,421.4,32.9,771.9,"La experiencia profesional se valora en bloques de diez años, que pueden equivaler a créditos académicos en la carrera."
+T45,¿Puedo rendir un examen de ubicación de inglés al entrar?,379.3,378.6,35.6,876.7,"Sí, puedes rendir un examen de ubicación de inglés al entrar, y si superas el umbral de suficiencia B1, te exonerarán del estudio de la lengua."
+T46,¿Cuál es el teléfono para homologaciones en Quito?,440.8,440.2,36.5,710.4,El teléfono para homologaciones en Quito es 0987621218.
+T47,¿Cuál es el correo de admisiones?,411.2,410.7,31.6,656.2,El correo de admisiones es admisionesindoamerica@uti.edu.ec.
+T48,¿Cuál es el número de la central telefónica de Quito?,426.2,425.5,35.0,792.4,El número de la central telefónica de Quito es (+593) 2 382 6970.
+T49,¿La universidad tiene oficinas en Guayaquil?,407.1,406.4,39.7,532.5,"Sí, la universidad tiene oficinas en Guayaquil."
+T50,¿En qué meses hay más demanda de admisiones?,350.9,350.4,37.4,554.8,La mayor demanda de admisiones ocurre en los meses de marzo y abril.

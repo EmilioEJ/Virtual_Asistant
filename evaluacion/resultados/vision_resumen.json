@@ -1,0 +1,52 @@
+{
+  "cpu": "x86_64",
+  "mediapipe": "0.10.14",
+  "modelo": "blaze_face_short_range.tflite",
+  "repeticiones": 300,
+  "casos": [
+    {
+      "imagen": "con_rostro",
+      "resolucion": "320x240",
+      "ms_media": 2.84,
+      "ms_desv_est": 0.45,
+      "ms_p95": 3.63,
+      "rostros_detectados": 1,
+      "bytes_mensaje_cajas": 30,
+      "bytes_mensaje_jpeg_anterior": 13407,
+      "uso_cpu_1fps_pct": 0.28
+    },
+    {
+      "imagen": "con_rostro",
+      "resolucion": "640x480",
+      "ms_media": 2.92,
+      "ms_desv_est": 0.42,
+      "ms_p95": 3.66,
+      "rostros_detectados": 1,
+      "bytes_mensaje_cajas": 33,
+      "bytes_mensaje_jpeg_anterior": 34199,
+      "uso_cpu_1fps_pct": 0.29
+    },
+    {
+      "imagen": "sin_rostro",
+      "resolucion": "320x240",
+      "ms_media": 2.74,
+      "ms_desv_est": 0.42,
+      "ms_p95": 3.4,
+      "rostros_detectados": 0,
+      "bytes_mensaje_cajas": 13,
+      "bytes_mensaje_jpeg_anterior": 7359,
+      "uso_cpu_1fps_pct": 0.27
+    },
+    {
+      "imagen": "sin_rostro",
+      "resolucion": "640x480",
+      "ms_media": 2.77,
+      "ms_desv_est": 0.42,
+      "ms_p95": 3.47,
+      "rostros_detectados": 0,
+      "bytes_mensaje_cajas": 13,
+      "bytes_mensaje_jpeg_anterior": 54615,
+      "uso_cpu_1fps_pct": 0.28
+    }
+  ]
+}

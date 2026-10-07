@@ -1,0 +1,79 @@
+{
+  "casos": [
+    {
+      "escenario": "sin sesión",
+      "ruta": "/api/chat",
+      "esperado": 401,
+      "obtenido": 401
+    },
+    {
+      "escenario": "sin sesión",
+      "ruta": "/api/tts",
+      "esperado": 401,
+      "obtenido": 401
+    },
+    {
+      "escenario": "sin sesión",
+      "ruta": "/api/stt",
+      "esperado": 401,
+      "obtenido": 401
+    },
+    {
+      "escenario": "sin sesión",
+      "ruta": "/debug/rag?q=x",
+      "esperado": 401,
+      "obtenido": 401
+    },
+    {
+      "escenario": "sin sesión",
+      "ruta": "/debug/md",
+      "esperado": 401,
+      "obtenido": 401
+    },
+    {
+      "escenario": "sin sesión",
+      "ruta": "/api/admin/rag_status",
+      "esperado": 401,
+      "obtenido": 401
+    },
+    {
+      "escenario": "sin sesión",
+      "ruta": "/ws/chat",
+      "esperado": 4401,
+      "obtenido": 4401
+    },
+    {
+      "escenario": "sin sesión",
+      "ruta": "/ws",
+      "esperado": 4401,
+      "obtenido": 4401
+    },
+    {
+      "escenario": "clave errónea",
+      "ruta": "/api/login",
+      "esperado": 401,
+      "obtenido": 401
+    },
+    {
+      "escenario": "usuario regular",
+      "ruta": "/api/login",
+      "esperado": 200,
+      "obtenido": 200
+    },
+    {
+      "escenario": "usuario regular",
+      "ruta": "/debug/rag?q=x",
+      "esperado": 403,
+      "obtenido": 403
+    },
+    {
+      "escenario": "usuario regular",
+      "ruta": "/api/admin/rag_status",
+      "esperado": 403,
+      "obtenido": 403
+    }
+  ],
+  "aprobados": 12,
+  "total": 12,
+  "hash_pbkdf2_tras_login": true
+}

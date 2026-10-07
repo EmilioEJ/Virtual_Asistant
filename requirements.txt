@@ -18,3 +18,4 @@ sentence-transformers
 langchain-text-splitters
 pymupdf4llm
 markdown
+rank_bm25
